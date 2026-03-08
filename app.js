@@ -129,23 +129,31 @@ function saveUserToStorage(user) {
 
 // --- Event Listeners ---
 function setupEventListeners() {
-    const logo = document.getElementById('nav-logo');
-    logo.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigate('home');
-    });
-
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileNav = document.getElementById('mobile-nav');
-    mobileMenuBtn.addEventListener('click', () => {
-        mobileNav.classList.toggle('active');
-        const icon = mobileMenuBtn.querySelector('i');
-        if (mobileNav.classList.contains('active')) {
-            icon.classList.replace('fa-bars', 'fa-xmark');
-        } else {
-            icon.classList.replace('fa-xmark', 'fa-bars');
+    try {
+        const logo = document.getElementById('nav-logo');
+        if (logo) {
+            logo.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigate('home');
+            });
         }
-    });
+    } catch (e) {}
+
+    try {
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileNav = document.getElementById('mobile-nav');
+        if (mobileMenuBtn && mobileNav) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileNav.classList.toggle('active');
+                const icon = mobileMenuBtn.querySelector('i');
+                if (mobileNav.classList.contains('active')) {
+                    icon.classList.replace('ph-list', 'ph-xmark');
+                } else {
+                    icon.classList.replace('ph-xmark', 'ph-list');
+                }
+            });
+        }
+    } catch (e) {}
 }
 
 // --- Navigation Logic ---
@@ -401,12 +409,17 @@ function renderHome(container) {
     }).join("");
 
     // Generate List Videos below
-    let allLessons = DB.courses.flatMap(c => c.lessons);
+    let allLessons = [];
+    DB.courses.forEach(c => {
+        c.lessons.forEach(l => {
+            allLessons.push({ ...l, courseId: c.id, course: c });
+        });
+    });
     let listLessonsHtml = allLessons.slice(0, 4).map((lesson, idx) => {
         let num = (idx + 1).toString().padStart(2, '0');
         let badgeHtml = (lesson.isLocked) ? `<span class="badge badge-blue">KHÓA</span>` : `<span class="badge badge-green">FREE</span>`;
         return `
-            <div class="list-item" onclick="navigate('course_detail', '${DB.courses[0].id}')">
+            <div class="list-item" onclick="navigate('course_detail', '${lesson.courseId}')">
                 <div class="item-thumb" style="background-image: url('https://images.unsplash.com/photo-1610484826967-09c5720778c7?auto=format&fit=crop&q=80&w=200')">
                     <div class="item-index">${num}</div>
                 </div>
