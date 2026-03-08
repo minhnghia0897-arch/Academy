@@ -1228,7 +1228,7 @@ main {
 }
 
 /* --- Modal Styles --- */
-.modal-container {
+#modal-container {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
@@ -1238,6 +1238,10 @@ main {
     z-index: 9999;
     padding: 20px;
     animation: fadeIn 0.2s ease;
+}
+
+#modal-container.hidden {
+    display: none;
 }
 
 @keyframes fadeIn {
