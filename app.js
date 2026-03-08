@@ -951,25 +951,19 @@ window.handleSubsRegistration = function(e) {
     const name = document.getElementById('subs-name').value;
     const email = document.getElementById('subs-email').value;
     const password = document.getElementById('subs-password').value;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
     
-    submitBtn.innerHTML = '<i class="ph-light ph-spinner" style="animation: spin 1s linear infinite;"></i> Đang đăng ký...';
-    submitBtn.disabled = true;
+    const newUser = {
+        id: Date.now(),
+        email, password, name,
+        balance: 0,
+        isPremium: false,
+        createdAt: new Date().toISOString().split('T')[0],
+        status: 'active'
+    };
+    APP_STATE.user = newUser;
+    saveUserToStorage(newUser);
     
-    setTimeout(() => {
-        const newUser = {
-            id: Date.now(),
-            email, password, name,
-            balance: 0,
-            isPremium: false,
-            createdAt: new Date().toISOString().split('T')[0],
-            status: 'active'
-        };
-        APP_STATE.user = newUser;
-        saveUserToStorage(newUser);
-        
-        navigate('checkout');
-    }, 600);
+    navigate('checkout');
 };
 
 window.selectPaymentMethod = function(id) {
@@ -1209,23 +1203,9 @@ function renderNotifications(container) {
 }
 
 window.handleLogout = function() {
-    showLoadingOverlay('Đang đăng xuất...');
-    
-    setTimeout(() => {
-        APP_STATE.user = null;
-        saveUserToStorage(null);
-        hideLoadingOverlay();
-        
-        // Reload desktop layout for logged out state
-        if (window.innerWidth >= 481) {
-            renderDesktopLayout();
-            renderView();
-        } else {
-            navigate('home');
-        }
-        
-        showSuccessToast('Đăng xuất thành công!');
-    }, 500);
+    APP_STATE.user = null;
+    saveUserToStorage(null);
+    navigate('home');
 };
 
 function renderProfile(container) {
@@ -1450,47 +1430,36 @@ function handleAuth(event, type) {
     event.preventDefault();
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
-    const form = event.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
     
-    // Show loading
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="ph-light ph-spinner" style="animation: spin 1s linear infinite;"></i> Đang xử lý...';
-    submitBtn.disabled = true;
-    
-    setTimeout(() => {
-        if (type === 'login') {
-            const user = DB.users.find(u => u.email === email && u.password === password);
-            if (user) {
-                APP_STATE.user = user;
-                saveUserToStorage(user);
-                closeModal();
-                renderNavbar();
-                renderView();
-                showSuccessToast(`Đăng nhập thành công! Chào mừng ${user.name}`);
-            } else {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                alert('Email hoặc mật khẩu không đúng. (Gợi ý: user@test.com / 123)');
-            }
-        } else {
-            const name = document.getElementById('auth-name').value;
-            const newUser = {
-                id: Date.now(),
-                email, password, name,
-                balance: 0,
-                isPremium: false,
-                createdAt: new Date().toISOString().split('T')[0],
-                status: 'active'
-            };
-            APP_STATE.user = newUser;
-            saveUserToStorage(newUser);
+    if (type === 'login') {
+        const user = DB.users.find(u => u.email === email && u.password === password);
+        if (user) {
+            APP_STATE.user = user;
+            saveUserToStorage(user);
             closeModal();
             renderNavbar();
             renderView();
-            showSuccessToast('Đăng ký thành công! Chào mừng bạn');
+            alert(`Đăng nhập thành công! Chào mừng ${user.name}`);
+        } else {
+            alert('Email hoặc mật khẩu không đúng. (Gợi ý: user@test.com / 123)');
         }
-    }, 600);
+    } else {
+        const name = document.getElementById('auth-name').value;
+        const newUser = {
+            id: Date.now(),
+            email, password, name,
+            balance: 0,
+            isPremium: false,
+            createdAt: new Date().toISOString().split('T')[0],
+            status: 'active'
+        };
+        APP_STATE.user = newUser;
+        saveUserToStorage(newUser);
+        closeModal();
+        renderNavbar();
+        renderView();
+        alert('Đăng ký thành công!');
+    }
 }
 
 function showTopupModal() {
@@ -1525,31 +1494,11 @@ function showTopupModal() {
 function handleTopup(event) {
     event.preventDefault();
     const amount = parseInt(document.getElementById('topup-amount').value);
-    const submitBtn = event.target.querySelector('button[type="submit"]');
-    
-    submitBtn.innerHTML = '<i class="ph-light ph-spinner" style="animation: spin 1s linear infinite;"></i> Đang xử lý...';
-    submitBtn.disabled = true;
-    
-    setTimeout(() => {
-        APP_STATE.user.balance += amount;
-        saveUserToStorage(APP_STATE.user);
-        closeModal();
-        renderNavbar();
-        showSuccessToast(`Nạp thành công ${formatCurrency(amount)} vào tài khoản!`);
-    }, 600);
-}
-
-function handlePaymentSuccess() {
-    showLoadingOverlay('Đang xử lý thanh toán...');
-    
-    setTimeout(() => {
-        if(APP_STATE.user) {
-            APP_STATE.user.isPremium = true;
-            saveUserToStorage(APP_STATE.user);
-        }
-        hideLoadingOverlay();
-        navigate('success');
-    }, 1000);
+    APP_STATE.user.balance += amount;
+    saveUserToStorage(APP_STATE.user);
+    closeModal();
+    renderNavbar();
+    alert(`Nạp thành công ${formatCurrency(amount)} vào tài khoản!`);
 }
 
 function handleUpgradePremium(courseId) {
@@ -1820,64 +1769,6 @@ window.showSupportModal = function() {
     `;
 };
 
-// ==================== LOADING & TOAST FUNCTIONS ====================
-
-window.showLoadingOverlay = function(message = 'Đang tải...') {
-    let overlay = document.getElementById('loading-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <p>${message}</p>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-    overlay.querySelector('p').textContent = message;
-    overlay.classList.add('active');
-};
-
-window.hideLoadingOverlay = function() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        overlay.classList.remove('active');
-    }
-};
-
-window.showSuccessToast = function(message) {
-    let toast = document.createElement('div');
-    toast.className = 'success-toast';
-    toast.innerHTML = `
-        <i class="ph-light ph-check-circle"></i>
-        <span>${message}</span>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-};
-
-window.showErrorToast = function(message) {
-    let toast = document.createElement('div');
-    toast.className = 'error-toast';
-    toast.innerHTML = `
-        <i class="ph-light ph-x-circle"></i>
-        <span>${message}</span>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 3000);
-    }, 3000);
-};
-
 // ==================== HELPER FUNCTIONS ====================
 
 function formatCurrency(amount) {
@@ -1969,46 +1860,20 @@ window.handleAdminLogin = function(e) {
     e.preventDefault();
     const email = document.getElementById('admin-email').value;
     const password = document.getElementById('admin-password').value;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
     
-    // Show loading
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="ph-light ph-spinner" style="animation: spin 1s linear infinite;"></i> Đang đăng nhập...';
-    submitBtn.disabled = true;
-    
-    // Simulate loading delay
-    setTimeout(() => {
-        if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-            ADMIN_STATE.isLoggedIn = true;
-            localStorage.setItem('eduflex_admin', 'true');
-            ADMIN_STATE.currentAdminView = 'dashboard';
-            
-            // Show success then navigate
-            submitBtn.innerHTML = '<i class="ph-light ph-check"></i> Thành công!';
-            setTimeout(() => {
-                renderAdminDesktopLayout();
-            }, 300);
-        } else {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            alert('Email hoặc mật khẩu không đúng!');
-        }
-    }, 800);
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+        ADMIN_STATE.isLoggedIn = true;
+        localStorage.setItem('eduflex_admin', 'true');
+        ADMIN_STATE.currentAdminView = 'dashboard';
+        renderAdminView();
+    } else {
+        alert('Email hoặc mật khẩu không đúng!');
+    }
 };
 
 window.adminLogout = function() {
-    // Show loading overlay
-    showLoadingOverlay('Đang đăng xuất...');
-    
-    setTimeout(() => {
-        ADMIN_STATE.isLoggedIn = false;
-        localStorage.removeItem('eduflex_admin');
-        ADMIN_STATE.currentAdminView = 'dashboard';
-        
-        hideLoadingOverlay();
-        navigate('home');
-    }, 500);
-};
+    ADMIN_STATE.isLoggedIn = false;
+    localStorage.removeItem('eduflex_admin');
     navigate('home');
 };
 
