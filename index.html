@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EduFlex</title>
+    <!-- Google Fonts: Geist Sans (Headings) & Roboto Thin (Body/Small Text) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Roboto:wght@100;300;400&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Mobile App Container Simulator -->
+    <div id="app">
+        
+        <!-- App Top Bar (Dynamic per view) -->
+        <header id="app-header">
+            <!-- Injected by JS -->
+        </header>
+
+        <!-- Main Scrollable Content Area -->
+        <main id="main-content">
+            <!-- Landing / Course sections injected here -->
+        </main>
+
+        <!-- Bottom Navigation Menu -->
+        <nav class="bottom-nav" id="bottom-nav">
+            <div class="nav-item active" onclick="navigate('home')">
+                <i class="ph-light ph-house"></i>
+                <span>Trang chủ</span>
+            </div>
+            <div class="nav-item" onclick="navigate('courses')">
+                <i class="ph-light ph-book"></i>
+                <span>Khóa học</span>
+            </div>
+            <div class="nav-item" id="nav-item-third" onclick="navigate('notifications')">
+                <i class="ph-light ph-bell"></i>
+                <span>Thông báo</span>
+            </div>
+            <div class="nav-item" onclick="navigate('profile')">
+                <i class="ph-light ph-user"></i>
+                <span>Hồ sơ</span>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
+
