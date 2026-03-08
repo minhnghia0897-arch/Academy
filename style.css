@@ -197,26 +197,39 @@ main {
     align-items: center;
     z-index: 1000;
     padding-bottom: env(safe-area-inset-bottom);
+    padding: 8px 4px;
+    box-sizing: border-box;
 }
 
 .nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 2px;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     flex: 1;
     cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: var(--transition);
+    height: 100%;
 }
 
 .nav-item i {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
 }
 
 .nav-item.active {
     color: var(--primary-color);
+    background-color: var(--primary-light);
 }
 
 /* --- Buttons --- */
