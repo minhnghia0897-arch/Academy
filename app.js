@@ -1,20 +1,15 @@
-﻿/**
- * Main Application Logic
- * Mocks authentication, state management, and view routing
+/**
+ * EduFlex - Complete Application
+ * User App + Admin Panel
  */
 
-// --- Global State ---
-const APP_STATE = {
-    user: null, // null means not logged in
-    currentView: 'home', // 'home', 'course_detail'
-    currentCourse: null,
-};
-
-// --- Mock Database ---
-const DB = {
+// --- Default Database (for reset) ---
+const DEFAULT_DB = {
     users: [
-        { id: 1, email: 'user@test.com', password: '123', name: 'Nguyễn Văn A', balance: 50000, isPremium: false, completedLessons: ['l1', 'l2'] },
-        { id: 2, email: 'vip@test.com', password: '123', name: 'Trần Thị VIP', balance: 150000, isPremium: true, completedLessons: ['l1', 'l2', 'l6'] }
+        { id: 1, email: 'user@test.com', password: '123', name: 'Nguyễn Văn A', balance: 50000, isPremium: false, completedLessons: ['l1', 'l2'], createdAt: '2024-01-15', status: 'active' },
+        { id: 2, email: 'vip@test.com', password: '123', name: 'Trần Thị VIP', balance: 150000, isPremium: true, completedLessons: ['l1', 'l2', 'l6'], createdAt: '2024-02-20', status: 'active' },
+        { id: 3, email: 'demo@test.com', password: '123', name: 'Lê Văn Demo', balance: 0, isPremium: false, completedLessons: [], createdAt: '2024-03-01', status: 'active' },
+        { id: 4, email: 'banned@test.com', password: '123', name: 'Người dùng bị khóa', balance: 0, isPremium: false, completedLessons: [], createdAt: '2024-01-10', status: 'banned' }
     ],
     courses: [
         {
@@ -24,7 +19,7 @@ const DB = {
             thumbnail: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800',
             price: 0,
             isPremium: false,
-            level: 'Mentor', 
+            level: 'Mentor',
             hashtags: ['#resource', '#javascript', '#coding'],
             instructor: 'Thầy Bình',
             lessons: [
@@ -63,10 +58,87 @@ const DB = {
                 { id: 'l7', title: 'Bài 2: Nghiên cứu thị trường', duration: '50:20', isLocked: true, videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4' }
             ]
         }
+    ],
+    instructors: [
+        { id: 1, name: 'Thầy Bình', title: 'Giảng viên cao cấp', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100', bio: '10+ năm kinh nghiệm lập trình', coursesCount: 5, studentsCount: 1200, rating: 4.8 },
+        { id: 2, name: 'Cô Mai', title: 'Chuyên gia React', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100', bio: 'Chuyên gia Frontend', coursesCount: 3, studentsCount: 800, rating: 4.9 },
+        { id: 3, name: 'Chuyên gia Hoàng', title: 'CEO Startup', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100', bio: 'Khởi nghiệp và kinh doanh', coursesCount: 2, studentsCount: 500, rating: 4.7 }
+    ],
+    orders: [
+        { id: 'ORD001', userId: 1, userName: 'Nguyễn Văn A', userEmail: 'user@test.com', amount: 199000, date: '2024-03-01', paymentMethod: 'credit_card', status: 'completed', courseName: 'Premium 1 tháng' },
+        { id: 'ORD002', userId: 2, userName: 'Trần Thị VIP', userEmail: 'vip@test.com', amount: 150000, date: '2024-03-02', paymentMethod: 'momo', status: 'completed', courseName: 'React.js Thực chiến' },
+        { id: 'ORD003', userId: 3, userName: 'Lê Văn Demo', userEmail: 'demo@test.com', amount: 199000, date: '2024-03-03', paymentMethod: 'credit_card', status: 'pending', courseName: 'Premium 1 tháng' },
+        { id: 'ORD004', userId: 1, userName: 'Nguyễn Văn A', userEmail: 'user@test.com', amount: 500000, date: '2024-02-28', paymentMethod: 'bank_transfer', status: 'completed', courseName: 'Khởi Nghiệp 4.0' },
+        { id: 'ORD005', userId: 2, userName: 'Trần Thị VIP', userEmail: 'vip@test.com', amount: 99000, date: '2024-02-25', paymentMethod: 'momo', status: 'failed', courseName: 'Premium 1 tháng' }
+    ],
+    certificates: [
+        { id: 1, userId: 1, userName: 'Nguyễn Văn A', courseId: 'c1', courseName: 'Lập trình JavaScript Cơ bản', date: '2024-01-20', status: 'completed' },
+        { id: 2, userId: 2, userName: 'Trần Thị VIP', courseId: 'c1', courseName: 'Lập trình JavaScript Cơ bản', date: '2024-02-25', status: 'completed' },
+        { id: 3, userId: 2, userName: 'Trần Thị VIP', courseId: 'c3', courseName: 'Khởi Nghiệp 4.0', date: '2024-03-01', status: 'completed' }
     ]
 };
 
-// --- Components: Navigation ---
+// --- Initialize Database from localStorage ---
+function initDB() {
+    const savedDB = localStorage.getItem('eduflex_db');
+    if (savedDB) {
+        try {
+            return JSON.parse(savedDB);
+        } catch (e) {
+            console.error('Error parsing saved DB:', e);
+            return DEFAULT_DB;
+        }
+    }
+    return DEFAULT_DB;
+}
+
+// --- Save Database to localStorage ---
+function saveDB() {
+    localStorage.setItem('eduflex_db', JSON.stringify(DB));
+}
+
+// --- Reset Database to default ---
+window.resetDatabase = function() {
+    if (confirm('Bạn có chắc chắn muốn reset toàn bộ dữ liệu về mặc định? Tất cả dữ liệu thêm mới sẽ bị xóa!')) {
+        Object.assign(DB, JSON.parse(JSON.stringify(DEFAULT_DB)));
+        saveDB();
+        alert('Đã reset dữ liệu về mặc định!');
+        renderAdminView();
+    }
+};
+
+// --- Global State ---
+const APP_STATE = {
+    user: null,
+    currentView: 'home',
+    currentCourse: null,
+};
+
+// --- Mock Database (initialized from localStorage) ---
+let DB = initDB();
+
+// --- Admin State ---
+const ADMIN_STATE = {
+    isLoggedIn: false,
+    currentAdminView: 'dashboard'
+};
+
+const ADMIN_CREDENTIALS = {
+    email: 'admin@eduflex.vn',
+    password: 'admin123'
+};
+
+function getAdminStats() {
+    const totalUsers = DB.users.length;
+    const totalCourses = DB.courses.length;
+    const totalRevenue = DB.orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.amount, 0);
+    const premiumUsers = DB.users.filter(u => u.isPremium).length;
+    const activeUsers = DB.users.filter(u => u.status === 'active').length;
+    const completedCertificates = DB.certificates.length;
+    return { totalUsers, totalCourses, totalRevenue, premiumUsers, activeUsers, completedCertificates };
+}
+
+// --- Navigation ---
 function renderNavbar() {
     const mobileNav = document.getElementById('bottom-nav');
     if(!mobileNav) return;
@@ -99,23 +171,120 @@ function renderNavbar() {
     });
 }
 
-// --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
+    
+    // Handle window resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            renderDesktopLayout();
+            renderView();
+        }, 250);
+    });
 });
 
 function initApp() {
     loadUserFromStorage();
     setupEventListeners();
+    renderDesktopLayout();
     renderNavbar();
     renderView();
 }
 
-// --- State Management ---
+function renderDesktopLayout() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    
+    const isDesktop = window.innerWidth >= 1025;
+    const isTablet = window.innerWidth >= 481 && window.innerWidth <= 1024;
+    
+    if (isDesktop || isTablet) {
+        const userAvatar = APP_STATE.user ? APP_STATE.user.name.charAt(0) : '?';
+        const isLoggedIn = APP_STATE !== null && APP_STATE.user !== null;
+        
+        app.innerHTML = `
+            <div class="desktop-sidebar">
+                <div class="logo">
+                    <i class="ph-light ph-graduation-cap"></i> EduFlex
+                </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Menu</div>
+                    <div class="desktop-nav-item ${APP_STATE.currentView === 'home' ? 'active' : ''}" onclick="navigate('home')">
+                        <i class="ph-light ph-house"></i> Trang chủ
+                    </div>
+                    <div class="desktop-nav-item ${APP_STATE.currentView === 'courses_list' ? 'active' : ''}" onclick="navigate('courses_list')">
+                        <i class="ph-light ph-book-open"></i> Khóa học
+                    </div>
+                    <div class="desktop-nav-item ${APP_STATE.currentView === 'notifications' ? 'active' : ''}" onclick="navigate('notifications')">
+                        <i class="ph-light ph-bell"></i> Thông báo
+                    </div>
+                </div>
+                
+                <div class="sidebar-divider"></div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Tài khoản</div>
+                    ${APP_STATE.user ? `
+                        <div class="desktop-nav-item ${APP_STATE.currentView === 'profile' ? 'active' : ''}" onclick="navigate('profile')">
+                            <i class="ph-light ph-user"></i> Hồ sơ
+                        </div>
+                        <div class="desktop-nav-item" onclick="navigate('subscription')">
+                            <i class="ph-light ph-crown"></i> Premium
+                        </div>
+                        <div class="desktop-nav-item" onclick="handleLogout()">
+                            <i class="ph-light ph-sign-out"></i> Đăng xuất
+                        </div>
+                    ` : `
+                        <div class="sidebar-auth-buttons">
+                            <button class="btn btn-primary sidebar-btn" onclick="showAuthModal('login')">
+                                <i class="ph-light ph-sign-in"></i> Đăng nhập
+                            </button>
+                            <button class="btn btn-outline sidebar-btn" onclick="showAuthModal('register')">
+                                <i class="ph-light ph-user-plus"></i> Đăng ký
+                            </button>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="sidebar-divider"></div>
+                
+                <div class="sidebar-section">
+                    <div class="desktop-nav-item" onclick="navigateAdmin('admin_login')">
+                        <i class="ph-light ph-shield-check"></i> Admin Panel
+                    </div>
+                </div>
+            </div>
+            
+            <div class="desktop-main" id="desktop-main">
+                <header class="desktop-header">
+                    <div class="desktop-search">
+                        <i class="ph-light ph-magnifying-glass"></i>
+                        <input type="text" placeholder="Tìm kiếm khóa học..." oninput="handleSearch(this.value)">
+                    </div>
+                    <div class="desktop-user">
+                        ${APP_STATE.user 
+                            ? `<div class="desktop-user-avatar" onclick="navigate('profile')">${userAvatar}</div>`
+                            : `<button class="btn btn-primary" style="width:auto;padding:8px 20px;" onclick="showAuthModal('login')">Đăng nhập</button>`
+                        }
+                    </div>
+                </header>
+                <main id="main-content" style="padding-bottom: 0;"></main>
+            </div>
+        `;
+    }
+}
+
 function loadUserFromStorage() {
     const savedUser = localStorage.getItem('tedu_user');
     if (savedUser) {
         APP_STATE.user = JSON.parse(savedUser);
+    }
+    const savedAdmin = localStorage.getItem('eduflex_admin');
+    if (savedAdmin) {
+        ADMIN_STATE.isLoggedIn = true;
     }
 }
 
@@ -127,7 +296,6 @@ function saveUserToStorage(user) {
     }
 }
 
-// --- Event Listeners ---
 function setupEventListeners() {
     try {
         const logo = document.getElementById('nav-logo');
@@ -138,7 +306,6 @@ function setupEventListeners() {
             });
         }
     } catch (e) {}
-
     try {
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileNav = document.getElementById('mobile-nav');
@@ -156,27 +323,130 @@ function setupEventListeners() {
     } catch (e) {}
 }
 
-// --- Navigation Logic ---
 window.navigate = function(view, data = null) {
-    if (view === 'courses') view = 'courses_list'; // Safety alias mapping
+    if (view === 'courses') view = 'courses_list';
     
     APP_STATE.currentView = view;
     if (view === 'course_detail' && data) {
         APP_STATE.currentCourse = data;
     }
 
-    // Remove active class from static bottom-nav in index.html to let JS handle it
     document.querySelectorAll('.bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
 
     renderNavbar();
     renderView();
     window.scrollTo(0, 0);
-
-    // Custom event for cleanup
     document.dispatchEvent(new Event('navigate'));
 };
 
-// --- Routing / View Rendering ---
+window.navigateAdmin = function(view) {
+    // Khi chưa đăng nhập, luôn hiển thị trang đăng nhập admin
+    if (!ADMIN_STATE.isLoggedIn) {
+        view = 'admin_login';
+    }
+    
+    ADMIN_STATE.currentAdminView = view;
+    
+    // Kiểm tra nếu đang ở desktop layout
+    const isDesktop = window.innerWidth >= 481;
+    
+    if (isDesktop) {
+        // Render admin layout trên desktop
+        renderAdminDesktopLayout();
+    } else {
+        renderAdminView();
+    }
+};
+
+function renderAdminDesktopLayout() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    
+    // Nếu chưa đăng nhập, hiển thị form đăng nhập
+    if (!ADMIN_STATE.isLoggedIn) {
+        app.innerHTML = `
+            <div class="admin-login-page">
+                <div class="admin-login-card">
+                    <div class="admin-logo">
+                        <i class="ph-light ph-shield-check"></i>
+                    </div>
+                    <h2>Admin Panel</h2>
+                    <p>Đăng nhập để quản lý hệ thống</p>
+                    
+                    <form onsubmit="handleAdminLogin(event)">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="admin-email" class="form-control" required placeholder="admin@eduflex.vn">
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu</label>
+                            <input type="password" id="admin-password" class="form-control" required placeholder="admin123">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Đăng nhập</button>
+                    </form>
+                    
+                    <p style="margin-top:20px;font-size:0.8rem;color:var(--text-muted);">Demo: admin@eduflex.vn / admin123</p>
+                    
+                    <button class="btn btn-outline" style="margin-top:12px;width:100%;" onclick="navigate('home')">Quay lại</button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Đã đăng nhập - hiển thị admin layout
+    const navItems = [
+        { id: 'dashboard', icon: 'ph-chart-pie-slice', label: 'Tổng quan' },
+        { id: 'admin_users', icon: 'ph-users', label: 'Người dùng' },
+        { id: 'admin_courses', icon: 'ph-book-open', label: 'Khóa học' },
+        { id: 'admin_instructors', icon: 'ph-presentation-chart', label: 'Giảng viên' },
+        { id: 'admin_orders', icon: 'ph-shopping-cart', label: 'Đơn hàng' },
+        { id: 'admin_stats', icon: 'ph-chart-bar', label: 'Thống kê' },
+        { id: 'admin_settings', icon: 'ph-gear', label: 'Cài đặt' }
+    ];
+    
+    const navHtml = navItems.map(item => `
+        <div class="admin-nav-item ${ADMIN_STATE.currentAdminView === item.id ? 'active' : ''}" onclick="navigateAdmin('${item.id}')">
+            <i class="ph-light ph-${item.icon}"></i>
+            <span>${item.label}</span>
+        </div>
+    `).join('');
+    
+    app.innerHTML = `
+        <div class="admin-full-layout">
+            <div class="admin-sidebar">
+                <div class="admin-sidebar-header">
+                    <i class="ph-light ph-shield-check"></i> Admin Panel
+                </div>
+                ${navHtml}
+                <div class="admin-nav-item" onclick="adminLogout()" style="margin-top: auto;">
+                    <i class="ph-light ph-sign-out"></i>
+                    <span>Đăng xuất</span>
+                </div>
+            </div>
+            <div class="admin-content" id="admin-content-area">
+            </div>
+        </div>
+    `;
+    
+    // Render nội dung admin
+    if (ADMIN_STATE.currentAdminView === 'dashboard') {
+        renderAdminDashboard(document.getElementById('admin-content-area'));
+    } else if (ADMIN_STATE.currentAdminView === 'admin_users') {
+        renderAdminUsers(document.getElementById('admin-content-area'));
+    } else if (ADMIN_STATE.currentAdminView === 'admin_courses') {
+        renderAdminCourses(document.getElementById('admin-content-area'));
+    } else if (ADMIN_STATE.currentAdminView === 'admin_instructors') {
+        renderAdminInstructors(document.getElementById('admin-content-area'));
+    } else if (ADMIN_STATE.currentAdminView === 'admin_orders') {
+        renderAdminOrders(document.getElementById('admin-content-area'));
+    } else if (ADMIN_STATE.currentAdminView === 'admin_stats') {
+        renderAdminStats(document.getElementById('admin-content-area'));
+    } else if (ADMIN_STATE.currentAdminView === 'admin_settings') {
+        renderAdminSettings(document.getElementById('admin-content-area'));
+    }
+}
+
 function updateHeader(view) {
     const header = document.getElementById('app-header');
     if (!header) return;
@@ -233,9 +503,13 @@ function updateHeader(view) {
 function renderView() {
     const mainContent = document.getElementById('main-content');
     if(!mainContent) return;
-    mainContent.innerHTML = ''; // Clear current
+    mainContent.innerHTML = '';
     
-    updateHeader(APP_STATE.currentView);
+    const isDesktop = window.innerWidth >= 481;
+    
+    if (!isDesktop) {
+        updateHeader(APP_STATE.currentView);
+    }
     
     const bottomNav = document.getElementById('bottom-nav');
     if(APP_STATE.currentView === 'course_detail' || APP_STATE.currentView === 'checkout') {
@@ -266,8 +540,12 @@ function renderView() {
         renderCertificates(mainContent);
     } else if (APP_STATE.currentView === 'settings') {
         renderSettings(mainContent);
+    } else if (APP_STATE.currentView === 'admin_login' || APP_STATE.currentView.startsWith('admin_')) {
+        renderAdminView();
     }
 }
+
+// ==================== USER APP FUNCTIONS ====================
 
 function renderCourseDetail(container) {
     const courseId = APP_STATE.currentCourse;
@@ -278,10 +556,7 @@ function renderCourseDetail(container) {
         return;
     }
 
-    // Default to first lesson
     let activeLessonIndex = 0;
-    
-    // Check if user has access to premium course
     const hasAccess = !course.isPremium || (APP_STATE.user && APP_STATE.user.isPremium);
 
     const renderLesson = (lessonIndex) => {
@@ -383,10 +658,7 @@ function renderCourseDetail(container) {
     document.addEventListener('navigate', cleanup);
 }
 
-
-// --- Home Page Render ---
 function renderHome(container) {
-    // Generate Horizontal Featured Courses
     let featCoursesHtml = DB.courses.map((course, index) => {
         let badgeType = index % 2 === 0 ? "PHÁT TRIỂN" : "THIẾT KẾ";
         let rating = course.price === 0 ? "4.8" : "4.9";
@@ -414,7 +686,6 @@ function renderHome(container) {
         `;
     }).join("");
 
-    // Generate List Videos below
     let allLessons = [];
     DB.courses.forEach(c => {
         c.lessons.forEach(l => {
@@ -450,7 +721,7 @@ function renderHome(container) {
                     <i class="ph-light ph-magnifying-glass"></i>
                     <input type="text" id="home-search-input" placeholder="Bạn muốn học gì hôm nay?" oninput="handleSearch(this.value)">
                 </div>
-                    <button class="filter-btn" onclick="openFilterModal()"><i class="ph-light ph-sliders-horizontal"></i></button>
+                <button class="filter-btn" onclick="openFilterModal()"><i class="ph-light ph-sliders-horizontal"></i></button>
             </div>
         </div>
 
@@ -520,7 +791,6 @@ function renderHome(container) {
     `;
 }
 
-// --- Search Logic ---
 window.triggerSearch = function(query) {
     const inputEl = document.getElementById('home-search-input');
     if(inputEl) {
@@ -542,7 +812,6 @@ window.handleSearch = function(query) {
 
     const qLower = query.toLowerCase().trim();
     
-    // Filter matching courses
     const matchedCourses = DB.courses.filter(course => {
         const matchesTitle = course.title.toLowerCase().includes(qLower);
         const matchesHashtag = course.hashtags && course.hashtags.some(tag => tag.toLowerCase().includes(qLower));
@@ -558,7 +827,7 @@ window.handleSearch = function(query) {
         `;
     } else {
         resultsList.innerHTML = matchedCourses.map(course => {
-            const num = '01'; // Mocking sequence
+            const num = '01';
             const priceHtml = course.price === 0 
                 ? `<span style="color:var(--success); font-weight: 600;">Miễn phí</span>` 
                 : `<span style="color:var(--primary-color); font-weight: 600;">${formatCurrency(course.price)}</span>`;
@@ -587,7 +856,6 @@ window.handleSearch = function(query) {
     if(searchResultsContainer) searchResultsContainer.style.display = 'block';
 };
 
-// --- Subscription Page Render ---
 function renderSubscription(container) {
     let authFormHtml = '';
     
@@ -649,7 +917,6 @@ function renderSubscription(container) {
         </div>
 
         <div class="pricing-cards">
-            <!-- Free Pack -->
             <div class="pricing-card" onclick="alert('Gói Miễn phí sẽ bị giới hạn tài nguyên. Vui lòng chọn gói Premium để trải nghiệm tốt nhất.')">
                 <div class="pricing-name">GÓI MIỄN PHÍ</div>
                 <div class="pricing-price" style="color:var(--text-primary);">0đ<span>/tháng</span></div>
@@ -661,7 +928,6 @@ function renderSubscription(container) {
                 <button class="btn w-100" style="background:var(--primary-light); color:var(--primary-color); padding:16px; border-radius:999px; font-weight: 600;">Chọn gói này</button>
             </div>
 
-            <!-- Premium Pack -->
             <div class="pricing-card popular" onclick="${APP_STATE.user ? `navigate('checkout')` : `document.getElementById('subs-name').focus()`}">
                 <div class="popular-badge">PHỔ BIẾN NHẤT</div>
                 <div class="pricing-name" style="color:var(--primary-color);">GÓI PREMIUM</div>
@@ -690,7 +956,9 @@ window.handleSubsRegistration = function(e) {
         id: Date.now(),
         email, password, name,
         balance: 0,
-        isPremium: false
+        isPremium: false,
+        createdAt: new Date().toISOString().split('T')[0],
+        status: 'active'
     };
     APP_STATE.user = newUser;
     saveUserToStorage(newUser);
@@ -698,7 +966,6 @@ window.handleSubsRegistration = function(e) {
     navigate('checkout');
 };
 
-// --- Checkout and Success Pages Render ---
 window.selectPaymentMethod = function(id) {
     document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -798,7 +1065,6 @@ function renderSuccess(container) {
     `;
 }
 
-// --- Courses List Page Render ---
 window.filterCoursesByLevel = function(level) {
     APP_STATE.currentLevelFilter = level;
     document.querySelectorAll('.level-tab').forEach(tab => {
@@ -849,7 +1115,6 @@ window.filterCoursesByLevel = function(level) {
 function renderCoursesList(container) {
     if(!APP_STATE.currentLevelFilter) APP_STATE.currentLevelFilter = 'Tất cả';
 
-    // Calculate Learning Progress
     let totalLessonsCount = 0;
     DB.courses.forEach(c => {
         totalLessonsCount += (c.lessons ? c.lessons.length : 0);
@@ -860,10 +1125,9 @@ function renderCoursesList(container) {
         completedLessonsCount = APP_STATE.user.completedLessons.length;
     }
     
-    // Fallback Mock for Demo purposes if no user is signed in but we still want to show progress
     if (!APP_STATE.user) {
         completedLessonsCount = 3;
-        totalLessonsCount = 12; // Example numbers based on mockup
+        totalLessonsCount = 12;
     }
 
     const completionPercentage = totalLessonsCount === 0 ? 0 : Math.round((completedLessonsCount / totalLessonsCount) * 100);
@@ -877,7 +1141,6 @@ function renderCoursesList(container) {
                 </div>
             </div>
 
-            <!-- Learning Progress Card -->
             <div class="progress-card">
                 <div class="progress-header">
                     <div>
@@ -905,14 +1168,12 @@ function renderCoursesList(container) {
         </div>
 
         <div class="container" id="filtered-courses-list">
-            <!-- Courses rendered dynamically here -->
         </div>
     `;
 
     filterCoursesByLevel(APP_STATE.currentLevelFilter);
 }
 
-// --- Notifications Page Render ---
 function renderNotifications(container) {
     const notifications = [
         { id: 1, title: '🎉 Chào mừng đến với EduFlex', desc: 'Hãy bắt đầu khám phá các khóa học chất lượng cao ngay hôm nay!', time: '10 phút trước', unread: true, icon: 'ph-light ph-gift' },
@@ -941,7 +1202,6 @@ function renderNotifications(container) {
     `;
 }
 
-// --- Profile Page Render ---
 window.handleLogout = function() {
     APP_STATE.user = null;
     saveUserToStorage(null);
@@ -1009,11 +1269,116 @@ function renderProfile(container) {
                 <div class="profile-menu-icon" style="background:var(--cat-mkt-bg); color:var(--cat-mkt-icon);"><i class="ph-light ph-sign-out"></i></div>
                 <div class="profile-menu-text" style="color:var(--danger);">Đăng xuất</div>
             </div>
+            <div class="profile-menu-item" onclick="navigateAdmin('admin_login')">
+                <div class="profile-menu-icon" style="background:var(--bg-main); color:var(--danger);"><i class="ph-light ph-shield"></i></div>
+                <div class="profile-menu-text" style="color:var(--danger);">Admin Panel</div>
+                <div class="profile-menu-arrow"><i class="ph-light ph-caret-right"></i></div>
+            </div>
         </div>
     `;
 }
 
-// --- Modals Logic ---
+function renderCertificates(container) {
+    const certificates = APP_STATE.user ? DB.certificates.filter(c => c.userId === APP_STATE.user.id) : [];
+    
+    let certHtml = certificates.length > 0 ? certificates.map(cert => `
+        <div class="certificate-card">
+            <div class="cert-icon">🎓</div>
+            <div class="cert-content">
+                <div class="cert-title">${cert.courseName}</div>
+                <div class="cert-date">Ngày cấp: ${cert.date}</div>
+                <div class="cert-status">${cert.status}</div>
+            </div>
+            <button class="btn-download"><i class="ph-light ph-download"></i></button>
+        </div>
+    `).join("") : `
+        <div style="text-align:center;padding:40px 20px;">
+            <div style="font-size:4rem;margin-bottom:16px;">📜</div>
+            <h3 style="margin-bottom:8px;">Chưa có chứng chỉ</h3>
+            <p style="color:var(--text-secondary);">Hoàn thành khóa học để nhận chứng chỉ</p>
+            <button class="btn btn-primary" style="margin-top:16px;width:auto;padding:12px 32px;" onclick="navigate('courses_list')">Khám phá khóa học</button>
+        </div>
+    `;
+    
+    container.innerHTML = `
+        <div class="page-header">
+            <h1 class="page-title">Chứng chỉ của tôi</h1>
+        </div>
+        <div class="container" style="padding-bottom:24px;">
+            ${certHtml}
+        </div>
+    `;
+}
+
+function renderSettings(container) {
+    container.innerHTML = `
+        <div class="page-header">
+            <h1 class="page-title">Cài đặt tài khoản</h1>
+        </div>
+        
+        <div style="padding:0 20px;">
+            <div class="settings-section">
+                <div class="settings-title">TÀI KHOẢN</div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-user"></i></div>
+                    <div class="settings-text">Thông tin cá nhân</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-key"></i></div>
+                    <div class="settings-text">Đổi mật khẩu</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-bell"></i></div>
+                    <div class="settings-text">Thông báo</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">ỨNG DỤNG</div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-globe"></i></div>
+                    <div class="settings-text">Ngôn ngữ</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-moon"></i></div>
+                    <div class="settings-text">Giao diện</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-download"></i></div>
+                    <div class="settings-text">Tải xuống ngoại tuyến</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">KHÁC</div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-file-text"></i></div>
+                    <div class="settings-text">Điều khoản dịch vụ</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-shield-check"></i></div>
+                    <div class="settings-text">Chính sách bảo mật</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Phiên bản: 1.0.0')">
+                    <div class="settings-icon"><i class="ph-light ph-info"></i></div>
+                    <div class="settings-text">Phiên bản</div>
+                    <div class="settings-arrow">v1.0.0</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== MODAL FUNCTIONS ====================
+
 function closeModal() {
     const modalContainer = document.getElementById('modal-container');
     modalContainer.classList.add('hidden');
@@ -1079,13 +1444,14 @@ function handleAuth(event, type) {
             alert('Email hoặc mật khẩu không đúng. (Gợi ý: user@test.com / 123)');
         }
     } else {
-        // Mock Register
         const name = document.getElementById('auth-name').value;
         const newUser = {
             id: Date.now(),
             email, password, name,
             balance: 0,
-            isPremium: false
+            isPremium: false,
+            createdAt: new Date().toISOString().split('T')[0],
+            status: 'active'
         };
         APP_STATE.user = newUser;
         saveUserToStorage(newUser);
@@ -1135,13 +1501,6 @@ function handleTopup(event) {
     alert(`Nạp thành công ${formatCurrency(amount)} vào tài khoản!`);
 }
 
-function logout() {
-    APP_STATE.user = null;
-    saveUserToStorage(null);
-    renderNavbar();
-    renderView();
-}
-
 function handleUpgradePremium(courseId) {
     if (!APP_STATE.user) return showAuthModal('login');
     const course = DB.courses.find(c => c.id === courseId);
@@ -1149,15 +1508,15 @@ function handleUpgradePremium(courseId) {
     if (APP_STATE.user.balance >= course.price) {
         if (confirm(`Bạn có chắc chắn muốn mua khóa học này với giá ${formatCurrency(course.price)}?`)) {
             APP_STATE.user.balance -= course.price;
-            APP_STATE.user.isPremium = true; // Upgrade to premium via purchase
+            APP_STATE.user.isPremium = true;
             let userInDb = DB.users.find(u => u.id === APP_STATE.user.id);
             if(userInDb) {
                 userInDb.balance = APP_STATE.user.balance;
                 userInDb.isPremium = true;
             }
             saveUserToStorage(APP_STATE.user);
-            renderNavbar(); // update balance
-            navigate('course_detail', courseId); // re-render unlocking video
+            renderNavbar();
+            navigate('course_detail', courseId);
             alert('Thanh toán thành công! Bạn đã có quyền truy cập.');
         }
     } else {
@@ -1166,7 +1525,6 @@ function handleUpgradePremium(courseId) {
     }
 }
 
-// --- Filter Modal ---
 window.openFilterModal = function() {
     const modalContainer = document.getElementById('modal-container');
     modalContainer.classList.remove('hidden');
@@ -1278,7 +1636,6 @@ window.applyFilters = function() {
     }, 100);
 };
 
-// --- Follow Instructor ---
 window.toggleFollow = function(instructorName) {
     if (!APP_STATE.user) {
         showAuthModal('login');
@@ -1300,7 +1657,6 @@ window.toggleFollow = function(instructorName) {
     renderView();
 };
 
-// --- Discount Code ---
 window.discountApplied = false;
 window.discountPercent = 0;
 
@@ -1360,7 +1716,6 @@ window.removeDiscount = function() {
     `;
 };
 
-// --- Support Modal ---
 window.showSupportModal = function() {
     const modalContainer = document.getElementById('modal-container');
     modalContainer.classList.remove('hidden');
@@ -1414,114 +1769,792 @@ window.showSupportModal = function() {
     `;
 };
 
-// --- Certificates Page ---
-function renderCertificates(container) {
-    const certificates = APP_STATE.user ? [
-        { id: 1, courseName: 'Lập trình JavaScript Cơ bản', date: '15/01/2024', status: 'Hoàn thành' },
-    ] : [];
-    
-    let certHtml = certificates.length > 0 ? certificates.map(cert => `
-        <div class="certificate-card">
-            <div class="cert-icon">🎓</div>
-            <div class="cert-content">
-                <div class="cert-title">${cert.courseName}</div>
-                <div class="cert-date">Ngày cấp: ${cert.date}</div>
-                <div class="cert-status">${cert.status}</div>
-            </div>
-            <button class="btn-download"><i class="ph-light ph-download"></i></button>
-        </div>
-    `).join("") : `
-        <div style="text-align:center;padding:40px 20px;">
-            <div style="font-size:4rem;margin-bottom:16px;">📜</div>
-            <h3 style="margin-bottom:8px;">Chưa có chứng chỉ</h3>
-            <p style="color:var(--text-secondary);">Hoàn thành khóa học để nhận chứng chỉ</p>
-            <button class="btn btn-primary" style="margin-top:16px;width:auto;padding:12px 32px;" onclick="navigate('courses_list')">Khám phá khóa học</button>
-        </div>
-    `;
-    
-    container.innerHTML = `
-        <div class="page-header">
-            <h1 class="page-title">Chứng chỉ của tôi</h1>
-        </div>
-        <div class="container" style="padding-bottom:24px;">
-            ${certHtml}
-        </div>
-    `;
-}
+// ==================== HELPER FUNCTIONS ====================
 
-// --- Settings Page ---
-function renderSettings(container) {
-    container.innerHTML = `
-        <div class="page-header">
-            <h1 class="page-title">Cài đặt tài khoản</h1>
-        </div>
-        
-        <div style="padding:0 20px;">
-            <div class="settings-section">
-                <div class="settings-title">TÀI KHOẢN</div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-user"></i></div>
-                    <div class="settings-text">Thông tin cá nhân</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-key"></i></div>
-                    <div class="settings-text">Đổi mật khẩu</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-bell"></i></div>
-                    <div class="settings-text">Thông báo</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <div class="settings-title">ỨNG DỤNG</div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-globe"></i></div>
-                    <div class="settings-text">Ngôn ngữ</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-moon"></i></div>
-                    <div class="settings-text">Giao diện</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-download"></i></div>
-                    <div class="settings-text">Tải xuống ngoại tuyến</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <div class="settings-title">KHÁC</div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-file-text"></i></div>
-                    <div class="settings-text">Điều khoản dịch vụ</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
-                    <div class="settings-icon"><i class="ph-light ph-shield-check"></i></div>
-                    <div class="settings-text">Chính sách bảo mật</div>
-                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
-                </div>
-                <div class="settings-item" onclick="alert('Phiên bản: 1.0.0')">
-                    <div class="settings-icon"><i class="ph-light ph-info"></i></div>
-                    <div class="settings-text">Phiên bản</div>
-                    <div class="settings-arrow">v1.0.0</div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// --- Helpers ---
 function formatCurrency(amount) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 }
 
+// ==================== ADMIN PANEL FUNCTIONS ====================
 
+function renderAdminView() {
+    const mainContent = document.getElementById('main-content') || document.querySelector('.desktop-main');
+    if(!mainContent) return;
+    
+    const header = document.getElementById('app-header');
+    const bottomNav = document.getElementById('bottom-nav');
+    
+    if(bottomNav) bottomNav.style.display = 'none';
+    if(mainContent) mainContent.style.paddingBottom = '20px';
+    
+    // Hide desktop header on admin
+    const desktopHeader = document.querySelector('.desktop-header');
+    if (desktopHeader) desktopHeader.style.display = 'none';
+    
+    if (!ADMIN_STATE.isLoggedIn) {
+        renderAdminLogin(mainContent, header);
+        return;
+    }
 
+    renderAdminLayout(mainContent, header);
+    
+    if (ADMIN_STATE.currentAdminView === 'dashboard') {
+        renderAdminDashboard(mainContent);
+    } else if (ADMIN_STATE.currentAdminView === 'admin_users') {
+        renderAdminUsers(mainContent);
+    } else if (ADMIN_STATE.currentAdminView === 'admin_courses') {
+        renderAdminCourses(mainContent);
+    } else if (ADMIN_STATE.currentAdminView === 'admin_instructors') {
+        renderAdminInstructors(mainContent);
+    } else if (ADMIN_STATE.currentAdminView === 'admin_orders') {
+        renderAdminOrders(mainContent);
+    } else if (ADMIN_STATE.currentAdminView === 'admin_stats') {
+        renderAdminStats(mainContent);
+    } else if (ADMIN_STATE.currentAdminView === 'admin_settings') {
+        renderAdminSettings(mainContent);
+    }
+}
 
+function renderAdminLogin(container, header) {
+    // Render header cho mobile
+    if (header) {
+        header.innerHTML = `
+            <div class="top-bar surface">
+                <div class="top-bar-left">
+                    <button class="icon-btn transparent" onclick="navigate('home')"><i class="ph-light ph-arrow-left"></i></button>
+                </div>
+                <div class="top-bar-center">Đăng nhập Admin</div>
+                <div class="top-bar-right"></div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = `
+        <div class="admin-login-container">
+            <div class="admin-logo">
+                <i class="ph-light ph-shield-check"></i>
+            </div>
+            <h2>Admin Panel</h2>
+            <p>Đăng nhập để quản lý hệ thống</p>
+            
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="admin-email" class="form-control" required placeholder="admin@eduflex.vn">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="admin-password" class="form-control" required placeholder="admin123">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Đăng nhập</button>
+            </form>
+            
+            <p style="margin-top:20px;font-size:0.8rem;color:var(--text-muted);">Demo: admin@eduflex.vn / admin123</p>
+            
+            <button class="btn btn-outline" style="margin-top:12px;width:100%;" onclick="navigate('home')">Quay lại</button>
+        </div>
+    `;
+}
+
+window.handleAdminLogin = function(e) {
+    e.preventDefault();
+    const email = document.getElementById('admin-email').value;
+    const password = document.getElementById('admin-password').value;
+    
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+        ADMIN_STATE.isLoggedIn = true;
+        localStorage.setItem('eduflex_admin', 'true');
+        ADMIN_STATE.currentAdminView = 'dashboard';
+        renderAdminView();
+    } else {
+        alert('Email hoặc mật khẩu không đúng!');
+    }
+};
+
+window.adminLogout = function() {
+    ADMIN_STATE.isLoggedIn = false;
+    localStorage.removeItem('eduflex_admin');
+    navigate('home');
+};
+
+function renderAdminLayout(container, header) {
+    // Render header cho mobile
+    if (header) {
+        header.innerHTML = `
+            <div class="top-bar surface admin-top-bar">
+                <div class="top-bar-left">
+                    <div style="font-weight:700;font-size:1.1rem;color:var(--primary-color);">
+                        <i class="ph-light ph-shield-check"></i> Admin Panel
+                    </div>
+                </div>
+                <div class="top-bar-right">
+                    <button class="icon-btn transparent" onclick="adminLogout()"><i class="ph-light ph-sign-out"></i></button>
+                </div>
+            </div>
+        `;
+    }
+    
+    const navItems = [
+        { id: 'dashboard', icon: 'ph-chart-pie-slice', label: 'Tổng quan' },
+        { id: 'admin_users', icon: 'ph-users', label: 'Người dùng' },
+        { id: 'admin_courses', icon: 'ph-book-open', label: 'Khóa học' },
+        { id: 'admin_instructors', icon: 'ph-presentation-chart', label: 'Giảng viên' },
+        { id: 'admin_orders', icon: 'ph-shopping-cart', label: 'Đơn hàng' },
+        { id: 'admin_stats', icon: 'ph-chart-bar', label: 'Thống kê' },
+        { id: 'admin_settings', icon: 'ph-gear', label: 'Cài đặt' }
+    ];
+    
+    const navHtml = navItems.map(item => `
+        <div class="admin-nav-item ${ADMIN_STATE.currentAdminView === item.id ? 'active' : ''}" onclick="navigateAdmin('${item.id}')">
+            <i class="ph-light ph-${item.icon}"></i>
+            <span>${item.label}</span>
+        </div>
+    `).join('');
+    
+    container.innerHTML = `
+        <div class="admin-full-layout">
+            <div class="admin-sidebar">
+                ${navHtml}
+            </div>
+            <div class="admin-content" id="admin-content-area">
+            </div>
+        </div>
+    `;
+}
+
+function renderAdminDashboard(container) {
+    const stats = getAdminStats();
+    const area = document.getElementById('admin-content-area');
+    
+    const recentOrders = DB.orders.slice(0, 5);
+    const recentUsers = DB.users.slice(0, 5);
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Tổng quan</h1>
+            <p>Chào mừng đến với Admin Panel</p>
+        </div>
+        
+        <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+                <div class="stat-icon" style="background:#3b82f6;color:white;"><i class="ph-light ph-users"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">${stats.totalUsers}</div>
+                    <div class="stat-label">Tổng người dùng</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="stat-icon" style="background:#10b981;color:white;"><i class="ph-light ph-book-open"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">${stats.totalCourses}</div>
+                    <div class="stat-label">Khóa học</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="stat-icon" style="background:#f59e0b;color:white;"><i class="ph-light ph-currency-dollar"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">${formatCurrency(stats.totalRevenue)}</div>
+                    <div class="stat-label">Doanh thu</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="stat-icon" style="background:#8b5cf6;color:white;"><i class="ph-light ph-certificate"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value">${stats.completedCertificates}</div>
+                    <div class="stat-label">Chứng chỉ</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h2>Đơn hàng gần đây</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Số tiền</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${recentOrders.map(order => `
+                        <tr>
+                            <td>${order.id}</td>
+                            <td>${order.userName}</td>
+                            <td>${formatCurrency(order.amount)}</td>
+                            <td><span class="badge badge-${order.status === 'completed' ? 'green' : order.status === 'pending' ? 'blue' : 'gray'}">${order.status}</span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-section">
+            <h2>Người dùng mới</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên</th>
+                        <th>Email</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${recentUsers.map(user => `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td><span class="badge badge-${user.status === 'active' ? 'green' : 'gray'}">${user.status}</span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderAdminUsers(container) {
+    const area = document.getElementById('admin-content-area');
+    
+    const userRows = DB.users.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.isPremium ? '<span class="badge badge-premium">Premium</span>' : '<span class="badge badge-gray">Free</span>'}</td>
+            <td>${formatCurrency(user.balance)}</td>
+            <td><span class="badge badge-${user.status === 'active' ? 'green' : 'gray'}">${user.status}</span></td>
+            <td>
+                <button class="admin-action-btn" onclick="alert('Chức năng đang phát triển')"><i class="ph-light ph-pencil"></i></button>
+                <button class="admin-action-btn" onclick="alert('Chức năng đang phát triển')"><i class="ph-light ph-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Quản lý người dùng</h1>
+            <button class="btn btn-primary" style="width:auto;" onclick="alert('Chức năng đang phát triển')">
+                <i class="ph-light ph-plus"></i> Thêm người dùng
+            </button>
+        </div>
+        
+        <div class="admin-search-bar">
+            <input type="text" placeholder="Tìm kiếm người dùng..." class="form-control">
+        </div>
+        
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Email</th>
+                    <th>Premium</th>
+                    <th>Số dư</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${userRows}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderAdminCourses(container) {
+    const area = document.getElementById('admin-content-area');
+    
+    const courseRows = DB.courses.map(course => `
+        <tr>
+            <td><img src="${course.thumbnail}" style="width:60px;height:40px;object-fit:cover;border-radius:4px;"></td>
+            <td>${course.title}</td>
+            <td>${course.level}</td>
+            <td>${course.isPremium ? '<span class="badge badge-premium">Premium</span>' : 'Free'}</td>
+            <td>${formatCurrency(course.price)}</td>
+            <td>${course.lessons.length} bài</td>
+            <td>
+                <button class="admin-action-btn" onclick="showCourseForm('${course.id}')"><i class="ph-light ph-pencil"></i></button>
+                <button class="admin-action-btn" onclick="deleteCourse('${course.id}')"><i class="ph-light ph-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Quản lý khóa học</h1>
+            <button class="btn btn-primary" style="width:auto;" onclick="showCourseForm(null)">
+                <i class="ph-light ph-plus"></i> Thêm khóa học
+            </button>
+        </div>
+        
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Tên khóa học</th>
+                    <th>Cấp độ</th>
+                    <th>Loại</th>
+                    <th>Giá</th>
+                    <th>Bài học</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${courseRows}
+            </tbody>
+        </table>
+    `;
+}
+
+window.showCourseForm = function(courseId) {
+    const course = courseId ? DB.courses.find(c => c.id === courseId) : null;
+    const isEdit = course !== null;
+    
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.classList.remove('hidden');
+    
+    modalContainer.innerHTML = `
+        <div class="modal" style="max-width:600px;max-height:90vh;">
+            <div class="modal-header">
+                <h3>${isEdit ? 'Sửa khóa học' : 'Thêm khóa học mới'}</h3>
+                <button class="btn-close" onclick="closeModal()"><i class="ph-light ph-x"></i></button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto;">
+                <form id="course-form" onsubmit="saveCourse(event, '${courseId || ''}')">
+                    <div class="form-group">
+                        <label>Tiêu đề khóa học *</label>
+                        <input type="text" id="course-title" class="form-control" required placeholder="Nhập tiêu đề khóa học" value="${course ? course.title : ''}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Mô tả *</label>
+                        <textarea id="course-description" class="form-control" rows="3" required placeholder="Nhập mô tả khóa học">${course ? course.description : ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Thể loại/Cấp độ *</label>
+                        <select id="course-level" class="form-control" required>
+                            <option value="">Chọn cấp độ</option>
+                            <option value="Mentor" ${course && course.level === 'Mentor' ? 'selected' : ''}>Mentor</option>
+                            <option value="Master" ${course && course.level === 'Master' ? 'selected' : ''}>Master</option>
+                            <option value="VIP Master" ${course && course.level === 'VIP Master' ? 'selected' : ''}>VIP Master</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Hashtags (phân cách bằng dấu phẩy)</label>
+                        <input type="text" id="course-hashtags" class="form-control" placeholder="#javascript, #coding, #react" value="${course ? course.hashtags.join(', ') : ''}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Giảng viên *</label>
+                        <select id="course-instructor" class="form-control" required>
+                            <option value="">Chọn giảng viên</option>
+                            ${DB.instructors.map(inst => `<option value="${inst.name}" ${course && course.instructor === inst.name ? 'selected' : ''}>${inst.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>URL Thumbnail *</label>
+                        <input type="url" id="course-thumbnail" class="form-control" required placeholder="https://example.com/image.jpg" value="${course ? course.thumbnail : ''}">
+                        <small style="color:var(--text-muted);font-size:0.8rem;">Nhập URL hình ảnh khóa học</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Giá (VNĐ) *</label>
+                        <input type="number" id="course-price" class="form-control" required placeholder="0" min="0" value="${course ? course.price : 0}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="course-premium" ${course && course.isPremium ? 'checked' : ''}>
+                            <span>Khóa học Premium</span>
+                        </label>
+                    </div>
+                    
+                    <h4 style="margin:20px 0 12px;font-size:1rem;">Danh sách bài học</h4>
+                    <div id="lessons-container">
+                        ${course ? course.lessons.map((lesson, idx) => `
+                            <div class="lesson-item" style="background:var(--bg-main);padding:12px;border-radius:8px;margin-bottom:8px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <span style="font-weight:600;font-size:0.9rem;">Bài ${idx + 1}</span>
+                                    <button type="button" onclick="this.parentElement.parentElement.remove()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;"><i class="ph-light ph-trash"></i></button>
+                                </div>
+                                <input type="hidden" name="lesson-id" value="${lesson.id}">
+                                <input type="text" name="lesson-title" class="form-control" style="margin-bottom:8px;" required placeholder="Tiêu đề bài học" value="${lesson.title}">
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" name="lesson-duration" class="form-control" required placeholder="Thời lượng (vd: 15:20)" value="${lesson.duration}" style="flex:1;">
+                                    <label style="display:flex;align-items:center;gap:4px;white-space:nowrap;">
+                                        <input type="checkbox" name="lesson-locked" ${lesson.isLocked ? 'checked' : ''}>
+                                        <span style="font-size:0.85rem;">Khóa</span>
+                                    </label>
+                                </div>
+                                <input type="url" name="lesson-video" class="form-control" style="margin-top:8px;" placeholder="URL Video" value="${lesson.videoUrl}">
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                    
+                    <button type="button" onclick="addLessonField()" style="background:transparent;border:1px dashed var(--border-color);color:var(--text-muted);padding:12px;border-radius:8px;width:100%;cursor:pointer;margin-bottom:16px;">
+                        <i class="ph-light ph-plus"></i> Thêm bài học
+                    </button>
+                    
+                    <div style="display:flex;gap:12px;margin-top:20px;">
+                        <button type="button" class="btn btn-outline" style="flex:1;" onclick="closeModal()">Hủy</button>
+                        <button type="submit" class="btn btn-primary" style="flex:1;">${isEdit ? 'Lưu thay đổi' : 'Thêm khóa học'}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+};
+
+window.addLessonField = function() {
+    const container = document.getElementById('lessons-container');
+    const lessonCount = container.children.length + 1;
+    
+    const lessonHtml = `
+        <div class="lesson-item" style="background:var(--bg-main);padding:12px;border-radius:8px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:600;font-size:0.9rem;">Bài ${lessonCount}</span>
+                <button type="button" onclick="this.parentElement.parentElement.remove()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;"><i class="ph-light ph-trash"></i></button>
+            </div>
+            <input type="hidden" name="lesson-id" value="l${Date.now()}">
+            <input type="text" name="lesson-title" class="form-control" style="margin-bottom:8px;" required placeholder="Tiêu đề bài học">
+            <div style="display:flex;gap:8px;">
+                <input type="text" name="lesson-duration" class="form-control" required placeholder="Thời lượng (vd: 15:20)" value="10:00" style="flex:1;">
+                <label style="display:flex;align-items:center;gap:4px;white-space:nowrap;">
+                    <input type="checkbox" name="lesson-locked">
+                    <span style="font-size:0.85rem;">Khóa</span>
+                </label>
+            </div>
+            <input type="url" name="lesson-video" class="form-control" style="margin-top:8px;" placeholder="URL Video" value="https://www.w3schools.com/html/mov_bbb.mp4">
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', lessonHtml);
+};
+
+window.saveCourse = function(e, courseId) {
+    e.preventDefault();
+    
+    const title = document.getElementById('course-title').value;
+    const description = document.getElementById('course-description').value;
+    const level = document.getElementById('course-level').value;
+    const hashtagsStr = document.getElementById('course-hashtags').value;
+    const instructor = document.getElementById('course-instructor').value;
+    const thumbnail = document.getElementById('course-thumbnail').value;
+    const price = parseInt(document.getElementById('course-price').value);
+    const isPremium = document.getElementById('course-premium').checked;
+    
+    const hashtags = hashtagsStr.split(',').map(tag => tag.trim()).filter(tag => tag);
+    
+    const lessons = [];
+    const lessonItems = document.querySelectorAll('.lesson-item');
+    lessonItems.forEach((item, idx) => {
+        lessons.push({
+            id: item.querySelector('[name="lesson-id"]').value,
+            title: item.querySelector('[name="lesson-title"]').value,
+            duration: item.querySelector('[name="lesson-duration"]').value,
+            isLocked: item.querySelector('[name="lesson-locked"]').checked,
+            videoUrl: item.querySelector('[name="lesson-video"]').value || 'https://www.w3schools.com/html/mov_bbb.mp4'
+        });
+    });
+    
+    if (lessons.length === 0) {
+        alert('Vui lòng thêm ít nhất 1 bài học!');
+        return;
+    }
+    
+    if (courseId) {
+        const courseIndex = DB.courses.findIndex(c => c.id === courseId);
+        if (courseIndex !== -1) {
+            DB.courses[courseIndex] = {
+                ...DB.courses[courseIndex],
+                title, description, level, hashtags, instructor, thumbnail, price, isPremium, lessons
+            };
+        }
+        alert('Cập nhật khóa học thành công!');
+    } else {
+        const newCourse = {
+            id: 'c' + (Date.now()),
+            title, description, level, hashtags, instructor, thumbnail, price, isPremium, lessons
+        };
+        DB.courses.push(newCourse);
+        alert('Thêm khóa học mới thành công!');
+    }
+    
+    saveDB();
+    closeModal();
+    renderAdminCourses(document.getElementById('main-content'));
+};
+
+window.deleteCourse = function(courseId) {
+    if (confirm('Bạn có chắc chắn muốn xóa khóa học này?')) {
+        DB.courses = DB.courses.filter(c => c.id !== courseId);
+        saveDB();
+        alert('Xóa khóa học thành công!');
+        renderAdminCourses(document.getElementById('main-content'));
+    }
+};
+
+function renderAdminInstructors(container) {
+    const area = document.getElementById('admin-content-area');
+    
+    const instructorCards = DB.instructors.map(inst => `
+        <div class="instructor-card-admin">
+            <img src="${inst.avatar}" alt="${inst.name}" class="instructor-avatar-admin">
+            <div class="instructor-info-admin">
+                <h3>${inst.name}</h3>
+                <p class="instructor-title-admin">${inst.title}</p>
+                <div class="instructor-stats">
+                    <span><i class="ph-light ph-book-open"></i> ${inst.coursesCount} khóa</span>
+                    <span><i class="ph-light ph-users"></i> ${inst.studentsCount} học viên</span>
+                    <span><i class="ph-light ph-star"></i> ${inst.rating}</span>
+                </div>
+            </div>
+            <div class="instructor-actions">
+                <button class="admin-action-btn" onclick="alert('Chức năng đang phát triển')"><i class="ph-light ph-pencil"></i></button>
+            </div>
+        </div>
+    `).join('');
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Quản lý giảng viên</h1>
+            <button class="btn btn-primary" style="width:auto;" onclick="alert('Chức năng đang phát triển')">
+                <i class="ph-light ph-plus"></i> Thêm giảng viên
+            </button>
+        </div>
+        
+        <div class="instructor-grid">
+            ${instructorCards}
+        </div>
+    `;
+}
+
+function renderAdminOrders(container) {
+    const area = document.getElementById('admin-content-area');
+    
+    const orderRows = DB.orders.map(order => `
+        <tr>
+            <td>${order.id}</td>
+            <td>${order.userName}</td>
+            <td>${order.userEmail}</td>
+            <td>${order.courseName}</td>
+            <td>${formatCurrency(order.amount)}</td>
+            <td>${order.paymentMethod}</td>
+            <td><span class="badge badge-${order.status === 'completed' ? 'green' : order.status === 'pending' ? 'blue' : 'gray'}">${order.status}</span></td>
+            <td>
+                <button class="admin-action-btn" onclick="alert('Chức năng đang phát triển')"><i class="ph-light ph-eye"></i></button>
+            </td>
+        </tr>
+    `).join('');
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Quản lý đơn hàng</h1>
+        </div>
+        
+        <div class="admin-stats-grid" style="margin-bottom:24px;">
+            <div class="admin-stat-card">
+                <div class="stat-content">
+                    <div class="stat-value">${DB.orders.filter(o => o.status === 'completed').length}</div>
+                    <div class="stat-label">Hoàn thành</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="stat-content">
+                    <div class="stat-value">${DB.orders.filter(o => o.status === 'pending').length}</div>
+                    <div class="stat-label">Chờ xử lý</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="stat-content">
+                    <div class="stat-value">${DB.orders.filter(o => o.status === 'failed').length}</div>
+                    <div class="stat-label">Thất bại</div>
+                </div>
+            </div>
+        </div>
+        
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Tên khách</th>
+                    <th>Email</th>
+                    <th>Khóa học</th>
+                    <th>Số tiền</th>
+                    <th>Phương thức</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${orderRows}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderAdminStats(container) {
+    const area = document.getElementById('admin-content-area');
+    const stats = getAdminStats();
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Thống kê & Báo cáo</h1>
+        </div>
+        
+        <div class="admin-chart-container">
+            <h3>Doanh thu theo tháng</h3>
+            <div class="admin-chart">
+                <div class="chart-bar" style="height:40%"><span>40M</span></div>
+                <div class="chart-bar" style="height:60%"><span>60M</span></div>
+                <div class="chart-bar" style="height:35%"><span>35M</span></div>
+                <div class="chart-bar" style="height:80%"><span>80M</span></div>
+                <div class="chart-bar" style="height:55%"><span>55M</span></div>
+                <div class="chart-bar" style="height:90%"><span>90M</span></div>
+            </div>
+            <div class="chart-labels">
+                <span>Tháng 1</span>
+                <span>Tháng 2</span>
+                <span>Tháng 3</span>
+                <span>Tháng 4</span>
+                <span>Tháng 5</span>
+                <span>Tháng 6</span>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Top khóa học</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Khóa học</th>
+                        <th>Lượt mua</th>
+                        <th>Doanh thu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>React.js Thực chiến</td>
+                        <td>45</td>
+                        <td>${formatCurrency(6750000)}</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Khởi Nghiệp 4.0</td>
+                        <td>32</td>
+                        <td>${formatCurrency(16000000)}</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Lập trình JavaScript Cơ bản</td>
+                        <td>120</td>
+                        <td>${formatCurrency(0)}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Tỷ lệ người dùng</h3>
+            <div class="progress-stats">
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Premium</span>
+                        <span>${Math.round((stats.premiumUsers / stats.totalUsers) * 100)}%</span>
+                    </div>
+                    <div class="progress-bar-admin">
+                        <div class="progress-fill-admin" style="width:${(stats.premiumUsers / stats.totalUsers) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Free</span>
+                        <span>${Math.round(((stats.totalUsers - stats.premiumUsers) / stats.totalUsers) * 100)}%</span>
+                    </div>
+                    <div class="progress-bar-admin">
+                        <div class="progress-fill-admin" style="width:${((stats.totalUsers - stats.premiumUsers) / stats.totalUsers) * 100}%;background:var(--text-muted);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderAdminSettings(container) {
+    const area = document.getElementById('admin-content-area');
+    
+    area.innerHTML = `
+        <div class="admin-page-header">
+            <h1>Cài đặt hệ thống</h1>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Cấu hình Premium</h3>
+            <div class="settings-form">
+                <div class="form-group">
+                    <label>Giá Premium (VNĐ/ tháng)</label>
+                    <input type="number" class="form-control" value="199000">
+                </div>
+                <div class="form-group">
+                    <label>Giá Premium (VNĐ/ năm)</label>
+                    <input type="number" class="form-control" value="1990000">
+                </div>
+                <button class="btn btn-primary" onclick="alert('Lưu thành công!')">Lưu thay đổi</button>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Banner trang chủ</h3>
+            <div class="banner-preview">
+                <div style="background:linear-gradient(135deg,var(--primary-color),var(--primary-dark));padding:40px;border-radius:12px;text-align:center;color:white;">
+                    <h2>Giảm giá 50%</h2>
+                    <p>Cho tất cả khóa học Premium</p>
+                </div>
+            </div>
+            <button class="btn btn-outline" style="margin-top:12px;" onclick="alert('Chức năng đang phát triển')">Chỉnh sửa banner</button>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Thông tin hệ thống</h3>
+            <div class="system-info">
+                <div class="info-row">
+                    <span>Phiên bản</span>
+                    <span>1.0.0</span>
+                </div>
+                <div class="info-row">
+                    <span>Số người dùng</span>
+                    <span>${DB.users.length}</span>
+                </div>
+                <div class="info-row">
+                    <span>Số khóa học</span>
+                    <span>${DB.courses.length}</span>
+                </div>
+                <div class="info-row">
+                    <span>Số đơn hàng</span>
+                    <span>${DB.orders.length}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Quản lý dữ liệu</h3>
+            <div style="background: var(--bg-surface); border-radius: var(--radius-md); padding: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;">
+                    Reset dữ liệu sẽ xóa tất cả thay đổi và khôi phục về dữ liệu mặc định.
+                </p>
+                <button class="btn" style="background: var(--danger); color: white; width: auto;" onclick="resetDatabase()">
+                    <i class="ph-light ph-arrow-counter-clockwise"></i> Reset dữ liệu
+                </button>
+            </div>
+        </div>
+    `;
+}
