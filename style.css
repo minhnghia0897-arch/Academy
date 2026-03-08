@@ -1189,3 +1189,97 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
 .admin-sidebar-header i {
     font-size: 1.4rem;
 }
+
+/* Loading Overlay */
+#loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+#loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-content p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Toast Notifications */
+.success-toast, .error-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 99999;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 350px;
+}
+
+.success-toast.show, .error-toast.show {
+    transform: translateX(0);
+}
+
+.success-toast {
+    border-left: 4px solid var(--success);
+}
+
+.success-toast i {
+    color: var(--success);
+    font-size: 1.5rem;
+}
+
+.error-toast {
+    border-left: 4px solid var(--danger);
+}
+
+.error-toast i {
+    color: var(--danger);
+    font-size: 1.5rem;
+}
+
+.success-toast span, .error-toast span {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Spin animation for icons */
+.ph-spinner {
+    animation: spin 1s linear infinite;
+}
