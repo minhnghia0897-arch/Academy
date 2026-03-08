@@ -198,14 +198,16 @@ function updateHeader(view) {
                 </div>
             </div>
         `;
-    } else if (view === 'course_detail' || view === 'subscription' || view === 'checkout' || view === 'courses_list' || view === 'notifications' || view === 'profile') {
+    } else if (view === 'course_detail' || view === 'subscription' || view === 'checkout' || view === 'courses_list' || view === 'notifications' || view === 'profile' || view === 'certificates' || view === 'settings') {
         const titleMap = {
             'course_detail': 'EduFlex',
             'subscription': 'Đăng ký thành viên',
             'checkout': 'Thanh toán',
             'courses_list': 'Khóa học',
             'notifications': 'Thông báo',
-            'profile': 'Hồ sơ'
+            'profile': 'Hồ sơ',
+            'certificates': 'Chứng chỉ',
+            'settings': 'Cài đặt'
         };
         const title = titleMap[view] || '';
         const rightHtml = view === 'course_detail' ? `
@@ -260,6 +262,10 @@ function renderView() {
         renderNotifications(mainContent);
     } else if (APP_STATE.currentView === 'profile') {
         renderProfile(mainContent);
+    } else if (APP_STATE.currentView === 'certificates') {
+        renderCertificates(mainContent);
+    } else if (APP_STATE.currentView === 'settings') {
+        renderSettings(mainContent);
     }
 }
 
@@ -346,12 +352,12 @@ function renderCourseDetail(container) {
                             <div class="instructor-title">Giảng viên cao cấp</div>
                         </div>
                     </div>
-                    <button class="follow-btn">Theo dõi</button>
+                    <button class="follow-btn" onclick="toggleFollow('${course.instructor}')">Theo dõi</button>
                 </div>
 
                 <div class="section-header" style="margin-bottom: 16px;">
                     <h2 style="font-size:1.15rem;">Nội dung khóa học</h2>
-                    <a href="#" class="section-action">Xem tất cả</a>
+                    <a href="#" class="section-action" onclick="navigate('courses_list'); return false;">Xem tất cả</a>
                 </div>
                 
                 <div class="syllabus-list" style="padding:0;">
@@ -444,7 +450,7 @@ function renderHome(container) {
                     <i class="ph-light ph-magnifying-glass"></i>
                     <input type="text" id="home-search-input" placeholder="Bạn muốn học gì hôm nay?" oninput="handleSearch(this.value)">
                 </div>
-                <button class="filter-btn"><i class="ph-light ph-sliders-horizontal"></i></button>
+                    <button class="filter-btn" onclick="openFilterModal()"><i class="ph-light ph-sliders-horizontal"></i></button>
             </div>
         </div>
 
@@ -459,7 +465,7 @@ function renderHome(container) {
             <div class="container mt-2">
                 <div class="section-header">
                     <h2>Danh mục</h2>
-                    <a href="#" class="section-action">Xem tất cả</a>
+                    <a href="#" class="section-action" onclick="navigate('courses_list'); return false;">Xem tất cả</a>
                 </div>
             </div>
             
@@ -485,7 +491,7 @@ function renderHome(container) {
             <div class="container" id="feat-courses">
                 <div class="section-header">
                     <h2>Khóa học tiêu biểu</h2>
-                    <a href="#" class="section-action">Xem tất cả</a>
+                    <a href="#" class="section-action" onclick="navigate('courses_list'); return false;">Xem tất cả</a>
                 </div>
             </div>
             <div class="horizontal-scroll">
@@ -496,7 +502,7 @@ function renderHome(container) {
                 <div class="section-header" style="background-color: var(--primary-color); color: white; margin: -10px -20px 20px -20px; padding: 20px; border-radius:16px;">
                     <h2 style="color:white; margin-bottom:4px; font-size:1.1rem;">Khóa học tiêu biểu</h2>
                     <p style="font-weight:400; font-size:0.8rem; margin-bottom:12px; color:var(--primary-light);">Giảm giá lên đến 70% cho tất cả các chứng chỉ chuyên nghiệp.</p>
-                    <button class="btn" style="background:white; color:var(--primary-color); padding:8px 20px; font-size:0.85rem; width:fit-content;">Nhận ngay</button>
+                    <button class="btn" style="background:white; color:var(--primary-color); padding:8px 20px; font-size:0.85rem; width:fit-content;" onclick="navigate('subscription')">Nhận ngay</button>
                 </div>
 
                 <div class="section-header">
@@ -722,8 +728,8 @@ function renderCheckout(container) {
 
             <h3>Mã giảm giá</h3>
             <div class="discount-box">
-                <input type="text" class="form-control" placeholder="Nhập mã giảm giá">
-                <button class="btn btn-primary" style="width:auto; padding:0 24px; border-radius:var(--radius-md);">Áp dụng</button>
+                <input type="text" id="discount-code" class="form-control" placeholder="Nhập mã giảm giá">
+                <button class="btn btn-primary" style="width:auto; padding:0 24px; border-radius:var(--radius-md);" onclick="applyDiscountCode()">Áp dụng</button>
             </div>
 
             <h3>Phương thức thanh toán</h3>
@@ -971,12 +977,12 @@ function renderProfile(container) {
         </div>
 
         <div style="margin-bottom:24px;">
-            <div class="profile-menu-item">
+            <div class="profile-menu-item" onclick="navigate('courses_list')">
                 <div class="profile-menu-icon" style="background:var(--cat-dev-bg); color:var(--cat-dev-icon);"><i class="ph-light ph-chart-pie"></i></div>
                 <div class="profile-menu-text">Tiến trình học tập</div>
                 <div class="profile-menu-arrow"><i class="ph-light ph-caret-right"></i></div>
             </div>
-            <div class="profile-menu-item">
+            <div class="profile-menu-item" onclick="navigate('certificates')">
                 <div class="profile-menu-icon" style="background:var(--cat-biz-bg); color:var(--cat-biz-icon);"><i class="ph-light ph-certificate"></i></div>
                 <div class="profile-menu-text">Chứng chỉ của tôi</div>
                 <div class="profile-menu-arrow"><i class="ph-light ph-caret-right"></i></div>
@@ -989,12 +995,12 @@ function renderProfile(container) {
         </div>
 
         <div style="margin-bottom:24px;">
-            <div class="profile-menu-item">
+            <div class="profile-menu-item" onclick="navigate('settings')">
                 <div class="profile-menu-icon" style="background:var(--bg-main); color:var(--text-secondary);"><i class="ph-light ph-gear"></i></div>
                 <div class="profile-menu-text">Cài đặt tài khoản</div>
                 <div class="profile-menu-arrow"><i class="ph-light ph-caret-right"></i></div>
             </div>
-            <div class="profile-menu-item">
+            <div class="profile-menu-item" onclick="showSupportModal()">
                 <div class="profile-menu-icon" style="background:var(--bg-main); color:var(--text-secondary);"><i class="ph-light ph-headset"></i></div>
                 <div class="profile-menu-text">Hỗ trợ khách hàng</div>
                 <div class="profile-menu-arrow"><i class="ph-light ph-caret-right"></i></div>
@@ -1158,6 +1164,357 @@ function handleUpgradePremium(courseId) {
         alert('Số dư không đủ. Vui lòng nạp thêm tiền!');
         showTopupModal();
     }
+}
+
+// --- Filter Modal ---
+window.openFilterModal = function() {
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.classList.remove('hidden');
+    
+    modalContainer.innerHTML = `
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Lọc khóa học</h3>
+                <button class="btn-close" onclick="closeModal()"><i class="ph-light ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Danh mục</label>
+                    <select id="filter-category" class="form-control">
+                        <option value="">Tất cả</option>
+                        <option value="#mindset">Mindset</option>
+                        <option value="#business">Business</option>
+                        <option value="#resource">Resource</option>
+                        <option value="#marketing">Marketing</option>
+                        <option value="#coding">Coding</option>
+                        <option value="#design">Design</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cấp độ</label>
+                    <select id="filter-level" class="form-control">
+                        <option value="">Tất cả</option>
+                        <option value="Mentor">Mentor</option>
+                        <option value="Master">Master</option>
+                        <option value="VIP Master">VIP Master</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Giá</label>
+                    <select id="filter-price" class="form-control">
+                        <option value="">Tất cả</option>
+                        <option value="free">Miễn phí</option>
+                        <option value="paid">Có phí</option>
+                        <option value="premium">Premium</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="applyFilters()">Áp dụng bộ lọc</button>
+            </div>
+        </div>
+    `;
+};
+
+window.applyFilters = function() {
+    const category = document.getElementById('filter-category').value;
+    const level = document.getElementById('filter-level').value;
+    const price = document.getElementById('filter-price').value;
+    
+    closeModal();
+    navigate('courses_list');
+    
+    setTimeout(() => {
+        if (level) {
+            filterCoursesByLevel(level);
+        }
+        
+        if (category || price) {
+            const listContainer = document.getElementById('filtered-courses-list');
+            let filtered = [...DB.courses];
+            
+            if (category) {
+                filtered = filtered.filter(c => c.hashtags && c.hashtags.some(t => t.toLowerCase().includes(category.toLowerCase())));
+            }
+            
+            if (price === 'free') {
+                filtered = filtered.filter(c => c.price === 0);
+            } else if (price === 'paid') {
+                filtered = filtered.filter(c => c.price > 0 && !c.isPremium);
+            } else if (price === 'premium') {
+                filtered = filtered.filter(c => c.isPremium);
+            }
+            
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="text-center mt-4 text-muted">Không tìm thấy khóa học nào phù hợp.</div>`;
+            } else {
+                listContainer.innerHTML = filtered.map(course => {
+                    let priceHtml = course.price === 0 
+                        ? `<div class="course-list-free">Miễn phí</div>`
+                        : `<div class="course-list-price">${formatCurrency(course.price)}</div>`;
+                    
+                    let badgeHtml = course.isPremium 
+                        ? `<span class="badge badge-premium" style="position:absolute; top:8px; right:8px; font-size:0.6rem;"><i class="ph-light ph-crown"></i> PRO</span>` 
+                        : ``;
+
+                    return `
+                        <div class="course-list-item" onclick="navigate('course_detail', '${course.id}')">
+                            ${badgeHtml}
+                            <img src="${course.thumbnail}" class="course-list-thumb" alt="Thumb">
+                            <div class="course-list-content">
+                                <div>
+                                    <div class="badge badge-blue mb-1" style="font-size:0.6rem;">${course.level || 'Chưa cấp độ'}</div>
+                                    <div class="course-list-title">${course.title}</div>
+                                    <div class="course-list-instructor"><i class="ph-light ph-user-circle"></i> ${course.instructor}</div>
+                                </div>
+                                <div class="course-list-meta">
+                                    ${priceHtml}
+                                    <div style="font-size:0.8rem; font-weight: 600; display:flex; align-items:center; gap:4px;"><i class="ph-light ph-star" style="color:var(--warning)"></i> 4.9</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+            }
+        }
+    }, 100);
+};
+
+// --- Follow Instructor ---
+window.toggleFollow = function(instructorName) {
+    if (!APP_STATE.user) {
+        showAuthModal('login');
+        return;
+    }
+    
+    if (!APP_STATE.followingInstructors) {
+        APP_STATE.followingInstructors = [];
+    }
+    
+    const idx = APP_STATE.followingInstructors.indexOf(instructorName);
+    if (idx > -1) {
+        APP_STATE.followingInstructors.splice(idx, 1);
+        alert(`Đã hủy theo dõi ${instructorName}`);
+    } else {
+        APP_STATE.followingInstructors.push(instructorName);
+        alert(`Đã theo dõi ${instructorName}. Cảm ơn bạn!`);
+    }
+    renderView();
+};
+
+// --- Discount Code ---
+window.discountApplied = false;
+window.discountPercent = 0;
+
+window.applyDiscountCode = function() {
+    const codeInput = document.getElementById('discount-code');
+    const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+    
+    if (discountApplied) {
+        alert('Bạn đã áp dụng mã giảm giá rồi!');
+        return;
+    }
+    
+    if (code === 'EDUFLEX20') {
+        discountApplied = true;
+        discountPercent = 20;
+        const originalPrice = 199000;
+        const newPrice = originalPrice * 0.8;
+        
+        document.querySelector('.total-price-value').innerHTML = `${formatCurrency(newPrice)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;text-decoration:line-through;margin-left:8px;">${formatCurrency(originalPrice)}</span>`;
+        
+        codeInput.parentElement.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;flex:1;">
+                <span style="background:var(--success-light);color:var(--success);padding:8px 16px;border-radius:var(--radius-md);font-weight:600;font-size:0.9rem;">🎉 ${code} -20%</span>
+                <button onclick="removeDiscount()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;">Xóa</button>
+            </div>
+        `;
+        
+        alert('Áp dụng mã giảm giá thành công! Giảm 20%');
+    } else if (code === 'WELCOME50') {
+        discountApplied = true;
+        discountPercent = 50;
+        const originalPrice = 199000;
+        const newPrice = originalPrice * 0.5;
+        
+        document.querySelector('.total-price-value').innerHTML = `${formatCurrency(newPrice)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;text-decoration:line-through;margin-left:8px;">${formatCurrency(originalPrice)}</span>`;
+        
+        codeInput.parentElement.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;flex:1;">
+                <span style="background:var(--success-light);color:var(--success);padding:8px 16px;border-radius:var(--radius-md);font-weight:600;font-size:0.9rem;">🎉 ${code} -50%</span>
+                <button onclick="removeDiscount()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;">Xóa</button>
+            </div>
+        `;
+        
+        alert('Chào mừng! Giảm 50% cho lần đầu đăng ký!');
+    } else {
+        alert('Mã giảm giá không hợp lệ. Thử EDUFLEX20 hoặc WELCOME50');
+    }
+};
+
+window.removeDiscount = function() {
+    discountApplied = false;
+    discountPercent = 0;
+    document.querySelector('.total-price-value').innerHTML = '199.000đ';
+    document.querySelector('.discount-box').innerHTML = `
+        <input type="text" id="discount-code" class="form-control" placeholder="Nhập mã giảm giá">
+        <button class="btn btn-primary" style="width:auto; padding:0 24px; border-radius:var(--radius-md);" onclick="applyDiscountCode()">Áp dụng</button>
+    `;
+};
+
+// --- Support Modal ---
+window.showSupportModal = function() {
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.classList.remove('hidden');
+    
+    modalContainer.innerHTML = `
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Hỗ trợ khách hàng</h3>
+                <button class="btn-close" onclick="closeModal()"><i class="ph-light ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align:center;padding:20px 0;">
+                    <div style="width:80px;height:80px;background:var(--primary-light);color:var(--primary-color);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 20px;">
+                        <i class="ph-light ph-headset"></i>
+                    </div>
+                    <h3 style="margin-bottom:12px;">Chúng tôi sẵn sàng hỗ trợ</h3>
+                    <p style="color:var(--text-secondary);margin-bottom:24px;">Liên hệ với chúng tôi qua các kênh dưới đây</p>
+                    
+                    <div style="background:var(--bg-main);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:var(--primary-light);color:var(--primary-color);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                            <i class="ph-light ph-envelope"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">Email</div>
+                            <div style="font-weight:600;">support@eduflex.vn</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:var(--bg-main);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:var(--success-light);color:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                            <i class="ph-light ph-phone"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">Hotline</div>
+                            <div style="font-weight:600;">1900 1234</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:var(--bg-main);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;background:#1877f2;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                            <i class="ph-light ph-messenger-logo"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">Messenger</div>
+                            <div style="font-weight:600;">m.me/eduflex.vn</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// --- Certificates Page ---
+function renderCertificates(container) {
+    const certificates = APP_STATE.user ? [
+        { id: 1, courseName: 'Lập trình JavaScript Cơ bản', date: '15/01/2024', status: 'Hoàn thành' },
+    ] : [];
+    
+    let certHtml = certificates.length > 0 ? certificates.map(cert => `
+        <div class="certificate-card">
+            <div class="cert-icon">🎓</div>
+            <div class="cert-content">
+                <div class="cert-title">${cert.courseName}</div>
+                <div class="cert-date">Ngày cấp: ${cert.date}</div>
+                <div class="cert-status">${cert.status}</div>
+            </div>
+            <button class="btn-download"><i class="ph-light ph-download"></i></button>
+        </div>
+    `).join("") : `
+        <div style="text-align:center;padding:40px 20px;">
+            <div style="font-size:4rem;margin-bottom:16px;">📜</div>
+            <h3 style="margin-bottom:8px;">Chưa có chứng chỉ</h3>
+            <p style="color:var(--text-secondary);">Hoàn thành khóa học để nhận chứng chỉ</p>
+            <button class="btn btn-primary" style="margin-top:16px;width:auto;padding:12px 32px;" onclick="navigate('courses_list')">Khám phá khóa học</button>
+        </div>
+    `;
+    
+    container.innerHTML = `
+        <div class="page-header">
+            <h1 class="page-title">Chứng chỉ của tôi</h1>
+        </div>
+        <div class="container" style="padding-bottom:24px;">
+            ${certHtml}
+        </div>
+    `;
+}
+
+// --- Settings Page ---
+function renderSettings(container) {
+    container.innerHTML = `
+        <div class="page-header">
+            <h1 class="page-title">Cài đặt tài khoản</h1>
+        </div>
+        
+        <div style="padding:0 20px;">
+            <div class="settings-section">
+                <div class="settings-title">TÀI KHOẢN</div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-user"></i></div>
+                    <div class="settings-text">Thông tin cá nhân</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-key"></i></div>
+                    <div class="settings-text">Đổi mật khẩu</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-bell"></i></div>
+                    <div class="settings-text">Thông báo</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">ỨNG DỤNG</div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-globe"></i></div>
+                    <div class="settings-text">Ngôn ngữ</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-moon"></i></div>
+                    <div class="settings-text">Giao diện</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-download"></i></div>
+                    <div class="settings-text">Tải xuống ngoại tuyến</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">KHÁC</div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-file-text"></i></div>
+                    <div class="settings-text">Điều khoản dịch vụ</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Chức năng đang phát triển')">
+                    <div class="settings-icon"><i class="ph-light ph-shield-check"></i></div>
+                    <div class="settings-text">Chính sách bảo mật</div>
+                    <div class="settings-arrow"><i class="ph-light ph-caret-right"></i></div>
+                </div>
+                <div class="settings-item" onclick="alert('Phiên bản: 1.0.0')">
+                    <div class="settings-icon"><i class="ph-light ph-info"></i></div>
+                    <div class="settings-text">Phiên bản</div>
+                    <div class="settings-arrow">v1.0.0</div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 // --- Helpers ---
