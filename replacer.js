@@ -47,11 +47,19 @@ const iconMap = {
     'fa-solid fa-times-circle': 'ph-light ph-x-circle'
 };
 
-['c:\\Users\\Admin\\.gemini\\antigravity\\playground\\ionized-apollo\\app.js', 'c:\\Users\\Admin\\.gemini\\antigravity\\playground\\ionized-apollo\\index.html'].forEach(file => {
+const targetDir = 'C:\\Users\\Admin\\OneDrive\\VIBECODE';
+const files = ['app.js', 'index.html'].map(f => `${targetDir}\\${f}`);
+
+files.forEach(file => {
+    if (!fs.existsSync(file)) {
+        console.log(`File not found: ${file}`);
+        return;
+    }
     let content = fs.readFileSync(file, 'utf8');
     for (let [oldIcon, newIcon] of Object.entries(iconMap)) {
-        content = content.replace(new RegExp(oldIcon, 'g'), newIcon);
+        content = content.replace(new RegExp(oldIcon.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), newIcon);
     }
     fs.writeFileSync(file, content);
+    console.log(`Updated: ${file}`);
 });
 console.log('done replacing icons');

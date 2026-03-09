@@ -112,6 +112,7 @@ const APP_STATE = {
     user: null,
     currentView: 'home',
     currentCourse: null,
+    history: [],
 };
 
 // --- Mock Database (initialized from localStorage) ---
@@ -202,7 +203,7 @@ function renderDesktopLayout() {
     
     if (isDesktop || isTablet) {
         const userAvatar = APP_STATE.user ? APP_STATE.user.name.charAt(0) : '?';
-        const isLoggedIn = APP_STATE !== null && APP_STATE.user !== null;
+        const isLoggedIn = APP_STATE.user !== null;
         
         app.innerHTML = `
             <div class="desktop-sidebar">
@@ -252,7 +253,7 @@ function renderDesktopLayout() {
                 <div class="sidebar-divider"></div>
                 
                 <div class="sidebar-section">
-                    <div class="desktop-nav-item" onclick="navigateAdmin('admin_login')">
+                    <div class="desktop-nav-item" onclick="window.open('admin.html', '_blank')">
                         <i class="ph-light ph-shield-check"></i> Admin Panel
                     </div>
                 </div>
@@ -323,8 +324,12 @@ function setupEventListeners() {
     } catch (e) {}
 }
 
-window.navigate = function(view, data = null) {
+window.navigate = function(view, data = null, isBack = false) {
     if (view === 'courses') view = 'courses_list';
+    
+    if (!isBack && view !== APP_STATE.currentView) {
+        APP_STATE.history.push(APP_STATE.currentView);
+    }
     
     APP_STATE.currentView = view;
     if (view === 'course_detail' && data) {
@@ -337,6 +342,15 @@ window.navigate = function(view, data = null) {
     renderView();
     window.scrollTo(0, 0);
     document.dispatchEvent(new Event('navigate'));
+};
+
+window.goBack = function() {
+    if (APP_STATE.history.length > 0) {
+        const prevView = APP_STATE.history.pop();
+        navigate(prevView, null, true);
+    } else {
+        navigate('home');
+    }
 };
 
 window.navigateAdmin = function(view) {
@@ -387,7 +401,7 @@ function renderAdminDesktopLayout() {
                     
                     <p style="margin-top:20px;font-size:0.8rem;color:var(--text-muted);">Demo: admin@eduflex.vn / admin123</p>
                     
-                    <button class="btn btn-outline" style="margin-top:12px;width:100%;" onclick="navigate('home')">Quay lại</button>
+                    <button class="btn btn-outline" style="margin-top:12px;width:100%;" onclick="goBack()">Quay lại</button>
                 </div>
             </div>
         `;
@@ -487,7 +501,7 @@ function updateHeader(view) {
         header.innerHTML = `
             <div class="top-bar surface">
                 <div class="top-bar-left">
-                    <button class="icon-btn transparent" onclick="navigate('home')"><i class="ph-light ph-arrow-left"></i></button>
+                    <button class="icon-btn transparent" onclick="goBack()"><i class="ph-light ph-arrow-left"></i></button>
                 </div>
                 <div class="top-bar-center">${title}</div>
                 <div class="top-bar-right">
@@ -948,8 +962,8 @@ function renderSubscription(container) {
 
 window.handleSubsRegistration = function(e) {
     e.preventDefault();
-    const name = document.getElementById('subs-name').value;
-    const email = document.getElementById('subs-email').value;
+    const name = sanitizeHTML(document.getElementById('subs-name').value.trim());
+    const email = document.getElementById('subs-email').value.trim();
     const password = document.getElementById('subs-password').value;
     
     const newUser = {
@@ -962,6 +976,7 @@ window.handleSubsRegistration = function(e) {
     };
     APP_STATE.user = newUser;
     saveUserToStorage(newUser);
+    renderDesktopLayout();
     
     navigate('checkout');
 };
@@ -1203,9 +1218,14 @@ function renderNotifications(container) {
 }
 
 window.handleLogout = function() {
-    APP_STATE.user = null;
-    saveUserToStorage(null);
-    navigate('home');
+    showLoading();
+    setTimeout(() => {
+        APP_STATE.user = null;
+        saveUserToStorage(null);
+        renderDesktopLayout();
+        navigate('home');
+        hideLoading();
+    }, 300);
 };
 
 function renderProfile(container) {
@@ -1269,7 +1289,7 @@ function renderProfile(container) {
                 <div class="profile-menu-icon" style="background:var(--cat-mkt-bg); color:var(--cat-mkt-icon);"><i class="ph-light ph-sign-out"></i></div>
                 <div class="profile-menu-text" style="color:var(--danger);">Đăng xuất</div>
             </div>
-            <div class="profile-menu-item" onclick="navigateAdmin('admin_login')">
+            <div class="profile-menu-item" onclick="window.open('admin.html', '_blank')">
                 <div class="profile-menu-icon" style="background:var(--bg-main); color:var(--danger);"><i class="ph-light ph-shield"></i></div>
                 <div class="profile-menu-text" style="color:var(--danger);">Admin Panel</div>
                 <div class="profile-menu-arrow"><i class="ph-light ph-caret-right"></i></div>
@@ -1428,37 +1448,47 @@ function showAuthModal(type) {
 
 function handleAuth(event, type) {
     event.preventDefault();
-    const email = document.getElementById('auth-email').value;
+    const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     
     if (type === 'login') {
         const user = DB.users.find(u => u.email === email && u.password === password);
         if (user) {
-            APP_STATE.user = user;
-            saveUserToStorage(user);
-            closeModal();
-            renderNavbar();
-            renderView();
-            alert(`Đăng nhập thành công! Chào mừng ${user.name}`);
+            showLoading();
+            setTimeout(() => {
+                APP_STATE.user = user;
+                saveUserToStorage(user);
+                closeModal();
+                renderDesktopLayout();
+                renderNavbar();
+                renderView();
+                hideLoading();
+                alert(`Đăng nhập thành công! Chào mừng ${sanitizeHTML(user.name)}`);
+            }, 500);
         } else {
             alert('Email hoặc mật khẩu không đúng. (Gợi ý: user@test.com / 123)');
         }
     } else {
-        const name = document.getElementById('auth-name').value;
-        const newUser = {
-            id: Date.now(),
-            email, password, name,
-            balance: 0,
-            isPremium: false,
-            createdAt: new Date().toISOString().split('T')[0],
-            status: 'active'
-        };
-        APP_STATE.user = newUser;
-        saveUserToStorage(newUser);
-        closeModal();
-        renderNavbar();
-        renderView();
-        alert('Đăng ký thành công!');
+        showLoading();
+        setTimeout(() => {
+            const name = sanitizeHTML(document.getElementById('auth-name').value.trim());
+            const newUser = {
+                id: Date.now(),
+                email, password, name,
+                balance: 0,
+                isPremium: false,
+                createdAt: new Date().toISOString().split('T')[0],
+                status: 'active'
+            };
+            APP_STATE.user = newUser;
+            saveUserToStorage(newUser);
+            closeModal();
+            renderDesktopLayout();
+            renderNavbar();
+            renderView();
+            hideLoading();
+            alert('Đăng ký thành công!');
+        }, 500);
     }
 }
 
@@ -1573,9 +1603,15 @@ window.openFilterModal = function() {
 };
 
 window.applyFilters = function() {
-    const category = document.getElementById('filter-category').value;
-    const level = document.getElementById('filter-level').value;
-    const price = document.getElementById('filter-price').value;
+    const filterCategory = document.getElementById('filter-category');
+    const filterLevel = document.getElementById('filter-level');
+    const filterPrice = document.getElementById('filter-price');
+    
+    if (!filterCategory || !filterLevel || !filterPrice) return;
+    
+    const category = filterCategory.value;
+    const level = filterLevel.value;
+    const price = filterPrice.value;
     
     closeModal();
     navigate('courses_list');
@@ -1587,6 +1623,8 @@ window.applyFilters = function() {
         
         if (category || price) {
             const listContainer = document.getElementById('filtered-courses-list');
+            if (!listContainer) return;
+            
             let filtered = [...DB.courses];
             
             if (category) {
@@ -1662,12 +1700,16 @@ window.discountPercent = 0;
 
 window.applyDiscountCode = function() {
     const codeInput = document.getElementById('discount-code');
-    const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+    if (!codeInput) return;
+    
+    const code = codeInput.value.trim().toUpperCase();
     
     if (discountApplied) {
         alert('Bạn đã áp dụng mã giảm giá rồi!');
         return;
     }
+    
+    const totalPriceEl = document.querySelector('.total-price-value');
     
     if (code === 'EDUFLEX20') {
         discountApplied = true;
@@ -1675,14 +1717,18 @@ window.applyDiscountCode = function() {
         const originalPrice = 199000;
         const newPrice = originalPrice * 0.8;
         
-        document.querySelector('.total-price-value').innerHTML = `${formatCurrency(newPrice)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;text-decoration:line-through;margin-left:8px;">${formatCurrency(originalPrice)}</span>`;
+        if (totalPriceEl) {
+            totalPriceEl.innerHTML = `${formatCurrency(newPrice)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;text-decoration:line-through;margin-left:8px;">${formatCurrency(originalPrice)}</span>`;
+        }
         
-        codeInput.parentElement.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;flex:1;">
-                <span style="background:var(--success-light);color:var(--success);padding:8px 16px;border-radius:var(--radius-md);font-weight:600;font-size:0.9rem;">🎉 ${code} -20%</span>
-                <button onclick="removeDiscount()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;">Xóa</button>
-            </div>
-        `;
+        if (codeInput.parentElement) {
+            codeInput.parentElement.innerHTML = `
+                <div style="display:flex;align-items:center;gap:8px;flex:1;">
+                    <span style="background:var(--success-light);color:var(--success);padding:8px 16px;border-radius:var(--radius-md);font-weight:600;font-size:0.9rem;">🎉 ${code} -20%</span>
+                    <button onclick="removeDiscount()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;">Xóa</button>
+                </div>
+            `;
+        }
         
         alert('Áp dụng mã giảm giá thành công! Giảm 20%');
     } else if (code === 'WELCOME50') {
@@ -1691,14 +1737,18 @@ window.applyDiscountCode = function() {
         const originalPrice = 199000;
         const newPrice = originalPrice * 0.5;
         
-        document.querySelector('.total-price-value').innerHTML = `${formatCurrency(newPrice)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;text-decoration:line-through;margin-left:8px;">${formatCurrency(originalPrice)}</span>`;
+        if (totalPriceEl) {
+            totalPriceEl.innerHTML = `${formatCurrency(newPrice)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;text-decoration:line-through;margin-left:8px;">${formatCurrency(originalPrice)}</span>`;
+        }
         
-        codeInput.parentElement.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;flex:1;">
-                <span style="background:var(--success-light);color:var(--success);padding:8px 16px;border-radius:var(--radius-md);font-weight:600;font-size:0.9rem;">🎉 ${code} -50%</span>
-                <button onclick="removeDiscount()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;">Xóa</button>
-            </div>
-        `;
+        if (codeInput.parentElement) {
+            codeInput.parentElement.innerHTML = `
+                <div style="display:flex;align-items:center;gap:8px;flex:1;">
+                    <span style="background:var(--success-light);color:var(--success);padding:8px 16px;border-radius:var(--radius-md);font-weight:600;font-size:0.9rem;">🎉 ${code} -50%</span>
+                    <button onclick="removeDiscount()" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.85rem;">Xóa</button>
+                </div>
+            `;
+        }
         
         alert('Chào mừng! Giảm 50% cho lần đầu đăng ký!');
     } else {
@@ -1709,11 +1759,16 @@ window.applyDiscountCode = function() {
 window.removeDiscount = function() {
     discountApplied = false;
     discountPercent = 0;
-    document.querySelector('.total-price-value').innerHTML = '199.000đ';
-    document.querySelector('.discount-box').innerHTML = `
-        <input type="text" id="discount-code" class="form-control" placeholder="Nhập mã giảm giá">
-        <button class="btn btn-primary" style="width:auto; padding:0 24px; border-radius:var(--radius-md);" onclick="applyDiscountCode()">Áp dụng</button>
-    `;
+    const totalPriceEl = document.querySelector('.total-price-value');
+    const discountBoxEl = document.querySelector('.discount-box');
+    
+    if (totalPriceEl) totalPriceEl.innerHTML = '199.000đ';
+    if (discountBoxEl) {
+        discountBoxEl.innerHTML = `
+            <input type="text" id="discount-code" class="form-control" placeholder="Nhập mã giảm giá">
+            <button class="btn btn-primary" style="width:auto; padding:0 24px; border-radius:var(--radius-md);" onclick="applyDiscountCode()">Áp dụng</button>
+        `;
+    }
 };
 
 window.showSupportModal = function() {
@@ -1775,6 +1830,22 @@ function formatCurrency(amount) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 }
 
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
+
+function showLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('active');
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.remove('active');
+}
+
 // ==================== ADMIN PANEL FUNCTIONS ====================
 
 function renderAdminView() {
@@ -1821,7 +1892,7 @@ function renderAdminLogin(container, header) {
         header.innerHTML = `
             <div class="top-bar surface">
                 <div class="top-bar-left">
-                    <button class="icon-btn transparent" onclick="navigate('home')"><i class="ph-light ph-arrow-left"></i></button>
+                    <button class="icon-btn transparent" onclick="goBack()"><i class="ph-light ph-arrow-left"></i></button>
                 </div>
                 <div class="top-bar-center">Đăng nhập Admin</div>
                 <div class="top-bar-right"></div>
@@ -1851,7 +1922,7 @@ function renderAdminLogin(container, header) {
             
             <p style="margin-top:20px;font-size:0.8rem;color:var(--text-muted);">Demo: admin@eduflex.vn / admin123</p>
             
-            <button class="btn btn-outline" style="margin-top:12px;width:100%;" onclick="navigate('home')">Quay lại</button>
+            <button class="btn btn-outline" style="margin-top:12px;width:100%;" onclick="goBack()">Quay lại</button>
         </div>
     `;
 }
@@ -2469,8 +2540,21 @@ function renderAdminStats(container) {
                 <div class="progress-item">
                     <div class="progress-label">
                         <span>Premium</span>
-                        <span>${Math.round((stats.premiumUsers / stats.totalUsers) * 100)}%</span>
+                        <span>${stats.totalUsers > 0 ? Math.round((stats.premiumUsers / stats.totalUsers) * 100) : 0}%</span>
                     </div>
+                    <div class="progress-bar-admin">
+                        <div class="progress-fill-admin" style="width:${stats.totalUsers > 0 ? (stats.premiumUsers / stats.totalUsers) * 100 : 0}%"></div>
+                    </div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>Free</span>
+                        <span>${stats.totalUsers > 0 ? Math.round(((stats.totalUsers - stats.premiumUsers) / stats.totalUsers) * 100) : 0}%</span>
+                    </div>
+                    <div class="progress-bar-admin">
+                        <div class="progress-fill-admin" style="width:${stats.totalUsers > 0 ? ((stats.totalUsers - stats.premiumUsers) / stats.totalUsers) * 100 : 0}%;background:var(--text-muted);"></div>
+                    </div>
+                </div>
                     <div class="progress-bar-admin">
                         <div class="progress-fill-admin" style="width:${(stats.premiumUsers / stats.totalUsers) * 100}%"></div>
                     </div>

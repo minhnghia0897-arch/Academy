@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EduFlex - Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Roboto:wght@100;300;400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: block;
+            background: #000;
+        }
+        
+        #app {
+            max-width: 100%;
+            box-shadow: none;
+        }
+        
+        .admin-login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-surface) 100%);
+            padding: 20px;
+        }
+        
+        .admin-login-card {
+            background: var(--bg-surface);
+            padding: 40px;
+            border-radius: var(--radius-md);
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .admin-logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .admin-logo i {
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+        
+        .admin-login-card h2 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-family: var(--font-heading);
+        }
+        
+        .admin-login-card > p {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        
+        .admin-full-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            width: 260px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .admin-sidebar-header {
+            padding: 0 20px 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .admin-nav-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            border-right: 3px solid transparent;
+        }
+        
+        .admin-nav-item:hover {
+            background: var(--primary-light);
+            color: var(--text-primary);
+        }
+        
+        .admin-nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary-color);
+            border-right-color: var(--primary-color);
+        }
+        
+        .admin-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+        
+        .admin-page-header {
+            margin-bottom: 24px;
+        }
+        
+        .admin-page-header h1 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            margin-bottom: 4px;
+        }
+        
+        .admin-page-header p {
+            color: var(--text-secondary);
+        }
+        
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .admin-stat-card {
+            background: var(--bg-surface);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .admin-section {
+            background: var(--bg-surface);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        
+        .admin-section h2, .admin-section h3 {
+            margin-bottom: 16px;
+            font-family: var(--font-heading);
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .admin-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .admin-table img {
+            border-radius: var(--radius-sm);
+        }
+        
+        .admin-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        
+        .admin-action-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+        
+        .instructor-card-admin {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-main);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+        }
+        
+        .instructor-avatar-admin {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .instructor-info-admin h3 {
+            margin-bottom: 4px;
+        }
+        
+        .instructor-title-admin {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        
+        .instructor-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .instructor-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .instructor-actions {
+            margin-left: auto;
+        }
+        
+        .instructor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .admin-chart-container {
+            background: var(--bg-surface);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        
+        .admin-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 200px;
+            padding: 20px 0;
+        }
+        
+        .chart-bar {
+            width: 40px;
+            background: var(--primary-color);
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 8px;
+            font-size: 0.75rem;
+            color: white;
+        }
+        
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        .progress-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .progress-item {
+            width: 100%;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar-admin {
+            height: 8px;
+            background: var(--bg-main);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill-admin {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        .system-info {
+            background: var(--bg-main);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-row span:first-child {
+            color: var(--text-secondary);
+        }
+        
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 400px;
+        }
+        
+        .banner-preview {
+            margin-bottom: 12px;
+        }
+        
+        .admin-search-bar {
+            margin-bottom: 20px;
+        }
+        
+        .admin-search-bar input {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .lesson-item {
+            background: var(--bg-main);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 200px;
+            }
+            .admin-content {
+                margin-left: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="modal-container" class="hidden"></div>
+    </div>
+    
+    <script src="admin.js"></script>
+</body>
+</html>
