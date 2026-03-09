@@ -673,6 +673,8 @@ function renderCourseDetail(container) {
 }
 
 function renderHome(container) {
+    const { learners: topLearners, currentMonth } = getTopLearners();
+    
     let featCoursesHtml = DB.courses.map((course, index) => {
         let badgeType = index % 2 === 0 ? "PHÁT TRIỂN" : "THIẾT KẾ";
         let rating = course.price === 0 ? "4.8" : "4.9";
@@ -781,6 +783,27 @@ function renderHome(container) {
             </div>
             <div class="horizontal-scroll">
                 ${featCoursesHtml}
+            </div>
+
+            <div class="container">
+                <div class="section-header">
+                    <h2>Thành viên tiêu biểu</h2>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">${currentMonth}</span>
+                </div>
+            </div>
+            <div class="horizontal-scroll">
+                ${topLearners.map((user, idx) => `
+                    <div class="learner-card ${user.isPremium ? 'premium' : ''}">
+                        <div class="learner-avatar">
+                            ${user.name.charAt(0)}
+                            ${idx < 3 ? `<span class="rank-badge">${['🥇','🥈','🥉'][idx]}</span>` : ''}
+                        </div>
+                        <div class="learner-name">${user.name}</div>
+                        <div class="learner-stats">
+                            <i class="ph-light ph-fire"></i> ${user.completedCount} bài
+                        </div>
+                    </div>
+                `).join('')}
             </div>
 
             <div class="container">
@@ -1834,6 +1857,24 @@ function sanitizeHTML(str) {
     const temp = document.createElement('div');
     temp.textContent = str;
     return temp.innerHTML;
+}
+
+function getTopLearners() {
+    const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+    const currentMonth = monthNames[new Date().getMonth()];
+    
+    const learners = DB.users
+        .filter(u => u.status === 'active')
+        .map(u => ({
+            id: u.id,
+            name: u.name,
+            completedCount: u.completedLessons ? u.completedLessons.length : 0,
+            isPremium: u.isPremium
+        }))
+        .sort((a, b) => b.completedCount - a.completedCount)
+        .slice(0, 5);
+    
+    return { learners, currentMonth };
 }
 
 function showLoading() {

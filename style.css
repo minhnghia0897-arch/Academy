@@ -1224,3 +1224,65 @@ main { -ms-overflow-style: none; scrollbar-width: none; }
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Learner Card - Top Learners */
+.learner-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.learner-card .learner-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.learner-card .rank-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.3rem;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+}
+
+.learner-card .learner-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.learner-card .learner-stats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+}
+
+.learner-card .learner-stats i {
+    font-size: 0.9rem;
+}
+
+.learner-card.premium {
+    border-color: var(--warning);
+    background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(245, 158, 11, 0.1) 100%);
+}
